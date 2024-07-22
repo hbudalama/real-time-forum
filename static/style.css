@@ -1,0 +1,319 @@
+* {
+    margin: 0;
+    padding: 0;
+    font-family: 'poppins', sans-serif;
+    box-sizing: border-box;
+}
+.index {
+    min-height: 100vh;
+    width: 100%;
+    background: linear-gradient(to bottom right, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('/static/images/background.jpg');
+    background-position: center;
+    background-size: cover;
+}
+nav {
+    display: flex;
+    align-items: center;
+    background: #ffdb86aa;
+    justify-content: space-between;
+    padding: 10px 20px;
+    position: sticky;
+    top: 0;
+    width: 100%;
+    z-index: 100;
+}
+.logo {
+    width: 100px;
+}
+.nav-left,
+.nav-right {
+    display: flex;
+    align-items: center;
+}
+.user-icon img {
+    width: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+.user-icon {
+    margin-left: 15px;
+}
+.search-bar {
+    background: rgb(255, 255, 255);
+    width: 350px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+}
+.search-bar img {
+    width: 19px;
+}
+.search-bar input {
+    width: 100%;
+    background: transparent;
+    padding: 10px;
+    outline: none;
+    border: 0;
+}
+.online {
+    position: relative;
+}
+.online::after {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: green;
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+.container {
+    display: flex;
+    justify-content: space-between;
+    padding: 20px;
+}
+.left-sidebar {
+    background: rgba(255, 255, 255, 0.034);
+    flex-basis: 25%;
+    position: sticky;
+    top: 70px;
+    align-self: flex-start;
+    height: 50vh;
+    border-radius: 10px;
+    margin-left: 10px;
+}
+.filter-section {
+    margin-bottom: 20px;
+    margin-top: 15px;
+    margin-left: 20px;
+}
+.filter-section h3 {
+    font-size: 18px;
+    /* Size of the heading */
+    margin-bottom: 10px;
+    /* Space below heading */
+    color: #b3b3b3;
+}
+.filter-section ul {
+    list-style: none;
+    /* Removes bullet points */
+    padding: 0;
+    /* Removes padding */
+}
+.filter-section ul li {
+    margin-bottom: 10px;
+    /* Space between list items */
+    display: flex;
+    /* Align checkbox and label */
+    align-items: center;
+    /* Vertically center */
+}
+.filter-section ul li input[type="checkbox"] {
+    margin-right: 10px;
+    /* Space between checkbox and label */
+}
+.filter-section ul li label {
+    font-size: 16px;
+    /* Label font size */
+    color: #626262;
+    /* Label color */
+}
+.main-content {
+    flex-basis: 50%;
+    margin-right: 150px;
+}
+.post-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    background-color: rgba(255, 255, 255, 0.034);
+    padding: 20px;
+    border-radius: 10px;
+    color: #626262;
+}
+.user-profile {
+    display: flex;
+    align-items: center;
+    /* margin-bottom: 20px; */
+}
+.user-profile-post {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+.user-profile img {
+    width: 45px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+.user-profile p {
+    font-weight: 500;
+    color: #626262;
+}
+.user-profile-post img {
+    width: 45px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+.user-profile-post p {
+    font-weight: 500;
+    color: #626262;
+}
+textarea {
+    margin-bottom: 5%;
+    width: 100%;
+    border: 0;
+    outline: 0;
+    border-bottom: 1px solid #ccc;
+    background: transparent;
+    resize: none;
+    color: white;
+}
+.post {
+    width: 100%;
+    background-color: rgba(255, 255, 255, 0.034);
+    border-radius: 10px;
+    padding: 20px;
+    color: #626262;
+    margin: 20px 0;
+}
+.post-text {
+    color: #9a9a9a;
+    margin: 15px 0;
+    font-size: 15px;
+}
+.post-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+#post-button-container {
+    width: 100%;
+}
+.activity-icons div img {
+    width: 18px;
+    margin-right: 15px;
+}
+.activity-icons div {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 30px;
+}
+.activity-icons a {
+    color: white;
+}
+.icon {
+    font-size: 20px;
+    /* Adjust the size as needed */
+    margin-right: 10px;
+    cursor: pointer;
+    color: white;
+}
+.fa-thumbs-up:active {
+    color: rgba(61, 114, 61, 0.808);
+}
+.fa-thumbs-down:active {
+    color: rgba(116, 43, 43, 0.808);
+}
+.fa-comment:active {
+    color: rgba(123, 123, 123, 0.808);
+}
+.load-more-button {
+    align-self: center;
+    margin-top: 50%;
+    display: flex;
+    cursor: pointer;
+    padding: 5px 10px;
+    border: 1px solid #9a9a9a;
+    color: #626262;
+    background: transparent;
+    border-radius: 4px;
+}
+.footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.load-more-button:hover {
+    background-color: #626262;
+    color: white;
+    transition: .3s;
+}
+.post-button {
+    display: block;
+    margin-top: 5px;
+    cursor: pointer;
+    padding: 5px 10px;
+    border: 1px solid #9a9a9a;
+    color: #626262;
+    background: transparent;
+    border-radius: 4px;
+    margin-left: auto;
+    width: 80px;
+}
+.post-button:hover {
+    background-color: #626262;
+    color: white;
+    transition: .3s;
+}
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+.dropdown-options {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+    right: 0;
+    /* Align the dropdown to the right of the image */
+    border-radius: 3px;
+}
+.dropdown-options a,
+button {
+    color: #626262;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+}
+.dropdown-options a:hover,
+button:hover {
+    background-color: #f1f1f1;
+}
+.dropdown:hover .dropdown-options {
+    display: block;
+}
+.post-container ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+.post-container ul li {
+    display: inline-block;
+    margin-right: 15px;
+    /* Adjust the spacing between checkboxes */
+}
+.post-container label {
+    margin-left: 5px;
+    /* Space between checkbox and label text */
+}
+.user-profile p {
+    font-weight: bolder;
+    color: #9a9a9a;
+}
+.post-title-link{
+    color: #ffffff;
+    text-decoration: none;
+}
+.post-title-link h2{
+    margin-top: 16px;
+    margin-bottom: 16px;
+    padding: 4px;
+}
+.error-message {
+    color: red;
+    margin-bottom: 10px;
+}
