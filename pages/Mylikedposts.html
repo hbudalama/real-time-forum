@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Posts</title>
+    <link rel="stylesheet" href="/static/indexStyle.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+        integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+
+<body>
+    <div class="index">
+        <nav>
+            <a href="/">
+                <img src="/static/images/logo.png" class="logo">
+            </a>
+            <div class="nav-right">
+                <div class="dropdown">
+                    {{if .LoggedInUser }}
+                    <div class="online">
+                    </div>
+                    {{end}}
+                    <div class="user-icon">
+                        <img src="/static/images/user.png" class="profile-image">
+                    </div>
+                    <div class="dropdown-options">
+                        {{if .LoggedInUser}}
+                        <button id="logoutBtn" onclick="logoutHandler(event)">Logout</button>
+                        {{else}}
+                        <a href="/login">Register/Login</a>
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container">
+            <div class="main-content">
+                {{ if .LoggedInUser}}
+                <div class="post-container">
+                    <div class="user-profile-post">
+                        <img src="/static/images/user.png">
+                        <div>
+                            <p>{{ .LoggedInUser.Username }}</p>
+                        </div>
+                    </div>
+                </div>
+                {{end}}
+
+                {{range .Posts}}
+                <div class="post">
+                    <div class="post-row">
+                        <div class="user-profile">
+                            <img src="/static/images/user.png">
+                            <div>
+                                <p>{{.Username}}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="/posts/{{.ID}}" class="post-title-link">
+                        <div>
+                            <h2>{{.Title}}</h2>
+                        </div>
+                    </a>
+                    <div class="post-row">
+                        <div class="activity-icons">
+                            <div>
+                                <a href="/api/posts/{{.ID}}/like">
+                                    <i class="fa fa-thumbs-up icon">
+                                    </i>
+                                    {{.Likes}}
+                                </a>
+                            </div>
+                            <div>
+                                <a href="/api/posts/{{.ID}}/dislike">
+                                    <i class="fa fa-thumbs-down icon">
+                                    </i>
+                                    {{.Dislikes}}
+                                </a>
+                            </div>
+                            <div>
+                                <a href="/posts/{{.ID}}">
+                                    <i class="fa fa-comment icon"></i>
+                                    {{.Comments}}
+                                </a>
+                            </div>
+                        </div>
+                        <div class="post-profile-icon">
+                        </div>
+                    </div>
+                </div>
+                {{end}}
+            </div>
+        </div>
+    </div>
+    <script src="/static/index.js"></script>
+</body>
+
+</html>

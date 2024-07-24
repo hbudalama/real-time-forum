@@ -1,14 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Forum</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/indexStyle.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
         integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
+
 <body>
     <div class="index">
         <nav>
@@ -33,8 +35,53 @@
                 </div>
             </div>
         </nav>
+
         <div class="container">
-             <!-- left sidebar -->
+            <!-- Left sidebar -->
+            <div class="left-sidebar">
+                <div class="filter-section">
+                    <h3>Categories</h3>
+                    <ul>
+                        <li>
+                            <input type="checkbox" id="filter-education" name="filter-category" value="education">
+                            <label for="filter-education">Education</label>
+                        </li>
+                        <li>
+                            <input type="checkbox" id="filter-entertainment" name="filter-category" value="entertainment">
+                            <label for="filter-entertainment">Entertainment</label>
+                        </li>
+                        <li>
+                            <input type="checkbox" id="filter-sports" name="filter-category" value="sports">
+                            <label for="filter-sports">Sports</label>
+                        </li>
+                        <li>
+                            <input type="checkbox" id="filter-news" name="filter-category" value="news">
+                            <label for="filter-news">News</label>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="filter-section">
+                    <h3>Created Posts</h3>
+                    <ul>
+                        <li>
+                            <input type="checkbox" id="mostLiked" name="createdPosts" value="mostLiked">
+                            <label for="mostLiked">Most Liked</label>
+                        </li>
+                        {{if .LoggedInUser}}
+                        <li>
+                            <input type="checkbox" id="myPosts" name="createdPosts" value="myPosts">
+                            <label for="myPosts">My Posts</label>
+                        </li>
+                        <li>
+                            <input type="checkbox" id="Mylikedposts" name="createdPosts" value="myLikedPosts">
+                            <label for="myLikedPosts">My Liked Posts</label>
+                        </li>
+                        {{end}}
+                    </ul>
+                </div>
+            </div>
+
             <!-- Main content -->
             <div class="main-content">
                 {{if .LoggedInUser}}
@@ -77,6 +124,7 @@
                     </form>
                 </div>
                 {{end}}
+
                 {{range .Posts}}
                 <div class="post">
                     <div class="post-row">
@@ -119,5 +167,7 @@
         </div>
     </div>
 </body>
+
 <script src="/static/index.js"></script>
+
 </html>
