@@ -99,14 +99,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    //Event listener for most liked filter
-    document.getElementById('mostLiked').addEventListener('change', function () {
-        if (this.checked) {
-            window.location.href = '/most-liked';
-        } else {
-            window.location.href = '/';
-        }
-    });
+   
 
     //Event listener for newest filter
     // document.getElementById('newest').addEventListener('change', function () {
@@ -125,4 +118,16 @@ function validateForm() {
         return false;
     }
     return true;
+}
+
+function logoutHandler(e) {
+    fetch('/logout', {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    })
+        .then(response => {
+            window.location.href = ('/login')
+        })
 }

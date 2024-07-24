@@ -442,15 +442,16 @@ func AddPostsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	title := r.FormValue("title")
-	content := r.FormValue("content")
-	categories := r.Form["category"] // Get the categories from the form
+content := r.FormValue("content")
+categories := r.Form["post-category"] // Update to match the form field name
 
-	log.Printf("Received categories: %v\n", categories) // Debug print
+log.Printf("Received categories: %v\n", categories) // Debug print
 
-	if strings.TrimSpace(title) == "" || strings.TrimSpace(content) == "" || len(categories) == 0 {
-		RenderAddPostForm(w, r, "The post must have a title, content, and at least one category")
-		return
-	}
+if strings.TrimSpace(title) == "" || strings.TrimSpace(content) == "" || len(categories) == 0 {
+    RenderAddPostForm(w, r, "The post must have a title, content, and at least one category")
+    return
+}
+
 
 	var user structs.User
 	cookie, err := r.Cookie("session_token")
