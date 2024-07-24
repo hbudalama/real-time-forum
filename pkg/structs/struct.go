@@ -58,3 +58,10 @@ type PostContext struct {
 	Post         Post
 	Comments     []Comment
 }
+
+type Message struct {
+    SenderUsername    string `json:"sender_username"`
+    RecipientUsername string `json:"recipient_username"`
+    Content           string `json:"content"`
+    CreatedDate       string `json:"created_date"`
+}

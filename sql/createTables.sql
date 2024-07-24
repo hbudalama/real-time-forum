@@ -57,3 +57,13 @@ CREATE TABLE IF NOT EXISTS CommentInteractions (
     FOREIGN KEY (username) REFERENCES User(username),
     UNIQUE (CommentID, username) 
 );
+
+CREATE TABLE IF NOT EXISTS Chat (
+    ChatID          INTEGER PRIMARY KEY AUTOINCREMENT,
+    SenderUsername     TEXT,
+    RecipientUsername  TEXT,
+    Content            TEXT NOT NULL,
+    CreatedDate        DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (SenderUsername) REFERENCES User(username),
+    FOREIGN KEY (RecipientUsername) REFERENCES User(username)
+);
