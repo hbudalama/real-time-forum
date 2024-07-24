@@ -3,9 +3,9 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 	"rtf/pkg/db"
 	"rtf/pkg/server"
-	"os"
 )
 
 func main() {
@@ -23,21 +23,20 @@ func main() {
 
 	mux.HandleFunc("/login", server.LoginHandler)
 	mux.HandleFunc("/posts/", server.PostHandler)
-	mux.HandleFunc("api/posts/{id}/comments", server.CommentsHandler)
-	mux.HandleFunc("posts/{id}", server.GetPostHandler)
-	mux.HandleFunc("api/posts/{id}/dislike", server.AddDislikesHandler)
-	mux.HandleFunc("api/posts/{id}/like", server.AddLikesHandler)
+	mux.HandleFunc("/api/posts/{id}/comments", server.CommentsHandler)
+	mux.HandleFunc("/posts/{id}", server.GetPostHandler)
+	mux.HandleFunc("/api/posts/{id}/dislike", server.AddDislikesHandler)
+	mux.HandleFunc("/api/posts/{id}/like", server.AddLikesHandler)
 	mux.HandleFunc("/signup", server.SignupHandler)
-	mux.HandleFunc("/", server.HomeHandler)   
-	mux.HandleFunc("/add-post", server.AddPostsHandler) 
-	mux.HandleFunc("/logout", server.LogoutHandler) 
-	mux.HandleFunc("/error404",server.Error404Handler)
-	mux.HandleFunc("/error500",server.Error500Handler)
-	mux.HandleFunc("/api/comments/{id}/like",server.LikeCommentHandler)
-	mux.HandleFunc("/api/comments/{id}/dislike",server.DislikeCommentHandler)
-	mux.HandleFunc("/myPosts",server.MyPostsHandler)
+	mux.HandleFunc("/", server.HomeHandler)
+	mux.HandleFunc("/add-post", server.AddPostsHandler)
+	mux.HandleFunc("/logout", server.LogoutHandler)
+	mux.HandleFunc("/error404", server.Error404Handler)
+	mux.HandleFunc("/error500", server.Error500Handler)
+	mux.HandleFunc("/api/comments/{id}/like", server.LikeCommentHandler)
+	mux.HandleFunc("/api/comments/{id}/dislike", server.DislikeCommentHandler)
+	mux.HandleFunc("/myPosts", server.MyPostsHandler)
 	mux.HandleFunc("/newest", server.NewestPostsHandler)
-
 
 	log.Println("Serving on http://localhost:8080")
 	err := http.ListenAndServe(":8080", mux)

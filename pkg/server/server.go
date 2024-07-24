@@ -203,12 +203,12 @@ func GetPostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := struct {
-		Post structs.Post
-		Comments []structs.Comment
+		Post         structs.Post
+		Comments     []structs.Comment
 		LoggedInUser *structs.User
 	}{
-		Post: post,
-		Comments: comments,
+		Post:         post,
+		Comments:     comments,
 		LoggedInUser: user,
 	}
 
@@ -262,10 +262,11 @@ func AddDislikesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	// http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func AddLikesHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("hanan")
 	if !LoginGuard(w, r) {
 		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 		return
@@ -275,7 +276,8 @@ func AddLikesHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("postIDStr: %s\n", postIDStr)
 	postID, err := strconv.Atoi(postIDStr)
 	if err != nil {
-		http.Error(w, "Invalid post ID", http.StatusBadRequest)
+		//http.Error(w, "Invalid post ID", http.StatusBadRequest)
+		Error400Handler(w, r)
 		return
 	}
 
@@ -442,16 +444,15 @@ func AddPostsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	title := r.FormValue("title")
-content := r.FormValue("content")
-categories := r.Form["post-category"] // Update to match the form field name
+	content := r.FormValue("content")
+	categories := r.Form["post-category"] // Update to match the form field name
 
-log.Printf("Received categories: %v\n", categories) // Debug print
+	log.Printf("Received categories: %v\n", categories) // Debug print
 
-if strings.TrimSpace(title) == "" || strings.TrimSpace(content) == "" || len(categories) == 0 {
-    RenderAddPostForm(w, r, "The post must have a title, content, and at least one category")
-    return
-}
-
+	if strings.TrimSpace(title) == "" || strings.TrimSpace(content) == "" || len(categories) == 0 {
+		RenderAddPostForm(w, r, "The post must have a title, content, and at least one category")
+		return
+	}
 
 	var user structs.User
 	cookie, err := r.Cookie("session_token")
@@ -677,51 +678,54 @@ func NewestPostsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func Error400Handler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	//w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	// tmpl, err := template.ParseFiles(filepath.Join("pages", "error400.html"))
 	// if err != nil {
 	// 	log.Printf("can't parse the template: %s\n", err.Error())
 	// 	Error500Handler(w, r)
 	// 	return
 	// }
-	w.WriteHeader(http.StatusBadRequest)
+	//w.WriteHeader(http.StatusBadRequest)
 	// err = tmpl.Execute(w, nil)
 	// if err != nil {
 	// 	log.Printf("can't execute the template: %s\n", err.Error())
 	// 	http.Error(w, "Internal Server Error Error400Handler", http.StatusInternalServerError)
 	// }
+	fmt.Println("400")
 }
 
 func Error500Handler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	//w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	//tmpl, err := template.ParseFiles(filepath.Join("pages", "error500.html"))
 	// if err != nil {
 	// 	log.Printf("can't parse the template: %s\n", err.Error())
 	// 	Error500Handler(w, r)
 	// 	return
 	// }
-	w.WriteHeader(http.StatusInternalServerError)
+	//w.WriteHeader(http.StatusInternalServerError)
 	// err = tmpl.Execute(w, nil)
 	// if err != nil {
 	// 	log.Printf("can't execute the template: %s\n", err.Error())
 	// 	http.Error(w, "Internal Server Error Error500Handler", http.StatusInternalServerError)
 	// }
+	fmt.Println("400")
 }
 
 func Error404Handler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	//w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	// tmpl, err := template.ParseFiles(filepath.Join("pages", "error404.html"))
 	// if err != nil {
 	// 	log.Printf("can't parse the template: %s\n", err.Error())
 	// 	Error500Handler(w, r)
 	// 	return
 	// }
-	w.WriteHeader(http.StatusNotFound)
+	//w.WriteHeader(http.StatusNotFound)
 	// err = tmpl.Execute(w, nil)
 	// if err != nil {
 	// 	log.Printf("can't execute the template: %s\n", err.Error())
 	// 	Error500Handler(w, r)
 	// }
+	fmt.Println("400")
 }
 
 func validEmail(email string) bool {

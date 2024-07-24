@@ -96,3 +96,4 @@ func CheckEmailExists(email string) (bool, error) {
 	return true, nil
 }
 
+
