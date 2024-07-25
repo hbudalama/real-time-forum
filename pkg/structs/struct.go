@@ -3,8 +3,12 @@ package structs
 import "time"
 
 type User struct {
-	Username string
-	Email    string
+	Username  string
+	Email     string
+	FirstName string
+	LastName  string
+	age       int
+	gender    int
 }
 
 type Post struct {
@@ -60,8 +64,8 @@ type PostContext struct {
 }
 
 type Message struct {
-    SenderUsername    string `json:"sender_username"`
-    RecipientUsername string `json:"recipient_username"`
-    Content           string `json:"content"`
-    CreatedDate       string `json:"created_date"`
+	SenderUsername    string
+	RecipientUsername string
+	Content           string
+	CreatedDate       string
 }

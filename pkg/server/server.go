@@ -23,36 +23,59 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == "POST" {
 		var requestData struct {
-			Username string `json:"username"`
-			Password string `json:"password"`
+			UsernameOrEmail string `json:"username_or_email"`
+			Password        string `json:"password"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&requestData); err != nil {
-			// http.Error(w, `{"reason": "Invalid request"}`, http.StatusBadRequest)
 			Error400Handler(w, r)
 			return
 		}
-		username := strings.TrimSpace(requestData.Username)
+		usernameOrEmail := strings.TrimSpace(requestData.UsernameOrEmail)
 		password := strings.TrimSpace(requestData.Password)
-		if username == "" {
-			// http.Error(w, `{"reason": "Username is required"}`, http.StatusBadRequest)
+		if usernameOrEmail == "" {
 			Error400Handler(w, r)
 			return
 		}
 		if password == "" {
-			// http.Error(w, `{"reason": "Password is required"}`, http.StatusBadRequest)
 			Error400Handler(w, r)
 			return
 		}
-		exists, err := db.CheckUsernameExists(username)
-		if err != nil {
-			log.Printf("LoginHandler: Error checking username: %s\n", err.Error())
-			Error500Handler(w, r)
-			return
+
+		var username string
+		var err error
+
+		// Check if the input is an email or a username
+		if strings.Contains(usernameOrEmail, "@") {
+			exists, err := db.CheckEmailExists(usernameOrEmail)
+			if err != nil {
+				log.Printf("LoginHandler: Error checking email: %s\n", err.Error())
+				Error500Handler(w, r)
+				return
+			}
+			if !exists {
+				http.Error(w, `{"reason": "Email not found"}`, http.StatusNotFound)
+				return
+			}
+			username, err = db.GetUsernameByEmail(usernameOrEmail)
+			if err != nil {
+				log.Printf("LoginHandler: Error getting username by email: %s\n", err.Error())
+				Error500Handler(w, r)
+				return
+			}
+		} else {
+			exists, err := db.CheckUsernameExists(usernameOrEmail)
+			if err != nil {
+				log.Printf("LoginHandler: Error checking username: %s\n", err.Error())
+				Error500Handler(w, r)
+				return
+			}
+			if !exists {
+				http.Error(w, `{"reason": "Username not found"}`, http.StatusNotFound)
+				return
+			}
+			username = usernameOrEmail
 		}
-		if !exists {
-			http.Error(w, `{"reason": "Username not found"}`, http.StatusNotFound)
-			return
-		}
+
 		passwordMatches, err := db.CheckPassword(username, password)
 		if err != nil {
 			log.Printf("LoginHandler: Error checking password: %s\n", err.Error())
@@ -63,6 +86,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, `{"reason": "Invalid password"}`, http.StatusUnauthorized)
 			return
 		}
+
 		token, err := db.CreateSession(username)
 		if err != nil {
 			log.Printf("LoginHandler: Error creating session: %s\n", err.Error())
@@ -127,43 +151,6 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, data)
 }
 
-func CommentsHandler(w http.ResponseWriter, r *http.Request) {
-	if !LoginGuard(w, r) {
-		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
-		return
-	}
-	if r.Method == http.MethodPost {
-		postIDStr := r.URL.Path[len("/api/posts/") : len(r.URL.Path)-len("/comments")]
-		postID, err := strconv.Atoi(postIDStr)
-		if err != nil {
-			http.Error(w, "Invalid post ID", http.StatusBadRequest)
-			return
-		}
-		comment := r.FormValue("comment")
-		if strings.TrimSpace(comment) == "" {
-			http.Error(w, "Comment cannot be empty", http.StatusBadRequest)
-			return
-		}
-		cookie, err := r.Cookie("session_token")
-		if err != nil {
-			log.Printf("can't get the cookie: %s\n", err.Error())
-			return
-		}
-		token := cookie.Value
-		session, err := db.GetSession(token)
-		if err != nil {
-			log.Printf("can't get the session: %s\n", err.Error())
-			return
-		}
-		username := session.User.Username
-		err = db.AddComment(postID, username, comment)
-		if err != nil {
-			Error500Handler(w, r)
-			return
-		}
-		http.Redirect(w, r, fmt.Sprintf("/posts/%d", postID), http.StatusSeeOther)
-	}
-}
 
 func GetPostHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
@@ -227,84 +214,6 @@ func GetPostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func AddDislikesHandler(w http.ResponseWriter, r *http.Request) {
-	if !LoginGuard(w, r) {
-		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
-		return
-	}
-
-	postIDStr := r.PathValue("id")
-	fmt.Printf("postIDStr: %s\n", postIDStr)
-	postID, err := strconv.Atoi(postIDStr)
-	if err != nil {
-		http.Error(w, "Invalid post ID", http.StatusBadRequest)
-		return
-	}
-
-	cookie, err := r.Cookie("session_token")
-	if err != nil {
-		log.Printf("can't get the cookie: %s\n", err.Error())
-		return
-	}
-
-	token := cookie.Value
-
-	session, err := db.GetSession(token)
-	if err != nil {
-		log.Printf("can't get the session: %s\n", err.Error())
-		return
-	}
-	username := session.User.Username
-
-	err = db.InsertOrUpdateInteraction(postID, username, 0)
-	if err != nil {
-		Error500Handler(w, r)
-		return
-	}
-
-	// http.Redirect(w, r, "/", http.StatusSeeOther)
-}
-
-func AddLikesHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("hanan")
-	if !LoginGuard(w, r) {
-		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
-		return
-	}
-
-	postIDStr := r.PathValue("id")
-	fmt.Printf("postIDStr: %s\n", postIDStr)
-	postID, err := strconv.Atoi(postIDStr)
-	if err != nil {
-		//http.Error(w, "Invalid post ID", http.StatusBadRequest)
-		Error400Handler(w, r)
-		return
-	}
-
-	cookie, err := r.Cookie("session_token")
-	if err != nil {
-		log.Printf("can't get the cookie: %s\n", err.Error())
-		return
-	}
-
-	token := cookie.Value
-
-	session, err := db.GetSession(token)
-	if err != nil {
-		log.Printf("can't get the session: %s\n", err.Error())
-		return
-	}
-	username := session.User.Username
-
-	err = db.InsertOrUpdateInteraction(postID, username, 1)
-	if err != nil {
-		Error500Handler(w, r)
-		return
-	}
-
-	http.Redirect(w, r, "/", http.StatusSeeOther)
-}
-
 func SignupHandler(w http.ResponseWriter, r *http.Request) {
 	if !MethodsGuard(w, r, "POST") {
 		return
@@ -313,6 +222,10 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 	var requestData struct {
 		Username        string `json:"username"`
 		Email           string `json:"email"`
+		FirstName       string `json:"first_name"`
+		LastName        string `json:"last_name"`
+		Age             int    `json:"age"`
+		Gender          bool   `json:"gender"`
 		Password        string `json:"password"`
 		ConfirmPassword string `json:"confirmPassword"`
 	}
@@ -324,6 +237,10 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 
 	username := strings.TrimSpace(requestData.Username)
 	email := strings.TrimSpace(requestData.Email)
+	firstName := strings.TrimSpace(requestData.FirstName)
+	lastName := strings.TrimSpace(requestData.LastName)
+	age := requestData.Age
+	gender := requestData.Gender
 	password := strings.TrimSpace(requestData.Password)
 	confirmPassword := strings.TrimSpace(requestData.ConfirmPassword)
 
@@ -377,7 +294,7 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 		Error500Handler(w, r)
 		return
 	}
-	_, err = db.AddUser(username, email, string(hashedPassword))
+	_, err = db.AddUser(username, email, firstName, lastName, age, gender, string(hashedPassword))
 	if err != nil {
 		errMsg := fmt.Sprintf(`{"reason": "%s"}`, err.Error())
 		http.Error(w, errMsg, http.StatusBadRequest)
@@ -527,84 +444,6 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func LikeCommentHandler(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("session_token")
-	if err != nil {
-		http.Redirect(w, r, "/login", http.StatusFound)
-		return
-	}
-	commentIDStr := r.PathValue("id")
-
-	commentID, err := strconv.Atoi(commentIDStr)
-	if err != nil {
-		http.Error(w, "Invalid comment ID", http.StatusBadRequest)
-		return
-	}
-
-	var user structs.User
-	cookie, err = r.Cookie("session_token")
-	if err != nil {
-		log.Printf("can't get the cookie: %s\n", err.Error())
-		return
-	}
-
-	token := cookie.Value
-
-	session, err := db.GetSession(token)
-	if err != nil {
-		log.Printf("can't get the session: %s\n", err.Error())
-		return
-	}
-	user = session.User
-
-	err = db.AddCommentInteraction(commentID, user.Username, 1)
-	if err != nil {
-		http.Error(w, "Unable to like comment", http.StatusInternalServerError)
-		return
-	}
-
-	http.Redirect(w, r, r.Referer(), http.StatusFound)
-}
-
-func DislikeCommentHandler(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("session_token")
-	if err != nil {
-		http.Redirect(w, r, "/login", http.StatusFound)
-		return
-	}
-	commentIDStr := r.PathValue("id")
-
-	commentID, err := strconv.Atoi(commentIDStr)
-	if err != nil {
-		http.Error(w, "Invalid comment ID", http.StatusBadRequest)
-		return
-	}
-
-	var user structs.User
-	cookie, err = r.Cookie("session_token")
-	if err != nil {
-		log.Printf("can't get the cookie: %s\n", err.Error())
-		return
-	}
-
-	token := cookie.Value
-
-	session, err := db.GetSession(token)
-	if err != nil {
-		log.Printf("can't get the session: %s\n", err.Error())
-		return
-	}
-	user = session.User
-
-	err = db.AddCommentInteraction(commentID, user.Username, 0)
-	if err != nil {
-		http.Error(w, "Unable to dislike comment", http.StatusInternalServerError)
-		return
-	}
-
-	http.Redirect(w, r, r.Referer(), http.StatusFound)
-}
-
 func MyPostsHandler(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("session_token")
 	if err != nil {
@@ -678,54 +517,15 @@ func NewestPostsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func Error400Handler(w http.ResponseWriter, r *http.Request) {
-	//w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	// tmpl, err := template.ParseFiles(filepath.Join("pages", "error400.html"))
-	// if err != nil {
-	// 	log.Printf("can't parse the template: %s\n", err.Error())
-	// 	Error500Handler(w, r)
-	// 	return
-	// }
-	//w.WriteHeader(http.StatusBadRequest)
-	// err = tmpl.Execute(w, nil)
-	// if err != nil {
-	// 	log.Printf("can't execute the template: %s\n", err.Error())
-	// 	http.Error(w, "Internal Server Error Error400Handler", http.StatusInternalServerError)
-	// }
 	fmt.Println("400")
 }
 
 func Error500Handler(w http.ResponseWriter, r *http.Request) {
-	//w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	//tmpl, err := template.ParseFiles(filepath.Join("pages", "error500.html"))
-	// if err != nil {
-	// 	log.Printf("can't parse the template: %s\n", err.Error())
-	// 	Error500Handler(w, r)
-	// 	return
-	// }
-	//w.WriteHeader(http.StatusInternalServerError)
-	// err = tmpl.Execute(w, nil)
-	// if err != nil {
-	// 	log.Printf("can't execute the template: %s\n", err.Error())
-	// 	http.Error(w, "Internal Server Error Error500Handler", http.StatusInternalServerError)
-	// }
 	fmt.Println("400")
 }
 
 func Error404Handler(w http.ResponseWriter, r *http.Request) {
-	//w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	// tmpl, err := template.ParseFiles(filepath.Join("pages", "error404.html"))
-	// if err != nil {
-	// 	log.Printf("can't parse the template: %s\n", err.Error())
-	// 	Error500Handler(w, r)
-	// 	return
-	// }
-	//w.WriteHeader(http.StatusNotFound)
-	// err = tmpl.Execute(w, nil)
-	// if err != nil {
-	// 	log.Printf("can't execute the template: %s\n", err.Error())
-	// 	Error500Handler(w, r)
-	// }
-	fmt.Println("400")
+	fmt.Println("404")
 }
 
 func validEmail(email string) bool {

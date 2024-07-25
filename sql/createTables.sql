@@ -1,6 +1,10 @@
 CREATE TABLE IF NOT EXISTS User (
-    username            TEXT PRIMARY KEY,
+    Username            TEXT PRIMARY KEY,
     email               TEXT NOT NULL UNIQUE,
+    firstName           TEXT NOT NULL,
+    lastName            TEXT NOT NULL,
+    age                 INTEGER NOT NULL,
+    gender              INTEGER NOT NULL CHECK (gender IN (0, 1)), -- 1 for female, 0 for male
     password            TEXT NOT NULL,
     sessionToken        TEXT,
     sessionExpiration   DATETIME
@@ -66,4 +70,8 @@ CREATE TABLE IF NOT EXISTS Chat (
     CreatedDate        DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (SenderUsername) REFERENCES User(username),
     FOREIGN KEY (RecipientUsername) REFERENCES User(username)
+);
+
+CREATE TABLE IF NOT EXISTS Notifications (
+    -- add later
 );

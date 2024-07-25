@@ -96,4 +96,16 @@ func CheckEmailExists(email string) (bool, error) {
 	return true, nil
 }
 
-
+func GetUsernameByEmail(email string) (string, error) {
+	var username string
+	dbMutex.Lock()
+	defer dbMutex.Unlock()
+	err := db.QueryRow("SELECT username FROM user WHERE email = ?", email).Scan(&username)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", nil
+		}
+		return "", err
+	}
+	return username, nil
+}

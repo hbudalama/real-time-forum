@@ -9,26 +9,28 @@ import (
 	"rtf/pkg/structs"
 )
 
-func AddUser(username string, email string, hashedPassword string) (*structs.User, error) {
-	// Insert user into the database
-	dbMutex.Lock()
-	defer dbMutex.Unlock()
-	_, err := db.Exec("INSERT INTO user (username, email, password) VALUES ($1, $2, $3)", username, email, hashedPassword)
-	if err != nil {
-		log.Printf("AddUser: %s\n", err.Error())
-		sqliteErr, ok := err.(sqlite3.Error)
-		if ok && sqliteErr.ExtendedCode == sqlite3.ErrConstraintUnique {
-			if strings.Contains(sqliteErr.Error(), "username") {
-				return nil, errors.New("username already exists")
-			} else if strings.Contains(sqliteErr.Error(), "email") {
-				return nil, errors.New("email already exists")
-			}
-		}
+func AddUser(username string, email string, firstName string, lastName string, age int, gender bool, hashedPassword string) (*structs.User, error) {
+    // Insert user into the database
+    dbMutex.Lock()
+    defer dbMutex.Unlock()
 
-		return &structs.User{}, errors.New("internal server error ??")
-	}
+    _, err := db.Exec("INSERT INTO User (username, email, firstName, lastName, age, gender, password) VALUES (?, ?, ?, ?, ?, ?, ?)", 
+        username, email, firstName, lastName, age, gender, hashedPassword)
+    if err != nil {
+        log.Printf("AddUser: %s\n", err.Error())
+        sqliteErr, ok := err.(sqlite3.Error)
+        if ok && sqliteErr.ExtendedCode == sqlite3.ErrConstraintUnique {
+            if strings.Contains(sqliteErr.Error(), "username") {
+                return nil, errors.New("username already exists")
+            } else if strings.Contains(sqliteErr.Error(), "email") {
+                return nil, errors.New("email already exists")
+            }
+        }
 
-	return nil, nil
+        return &structs.User{}, errors.New("internal server error ??")
+    }
+
+    return nil, nil
 }
 
 func GetUser(username string) (*structs.User, error) {

@@ -1,0 +1,13 @@
+body {
+    background-color: black;
+}
+
+
+#login-form {
+    background-color: red;
+    color: black;
+
+    input {
+        padding: 10px 20px;
+    }
+}
