@@ -1,8 +1,9 @@
 body {
     height: 100vh;
-    background: linear-gradient(to bottom right, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('/static/images/background.jpg');
+    /* background: linear-gradient(to bottom right, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('/static/images/background.jpg');
     background-position: center;
-    background-size: cover;
+    background-size: cover; */
+    background: black;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -15,12 +16,12 @@ body {
     max-width: 400px;
     align-items: center;
     padding: 0;
-    background-color: rgba(255, 255, 255, 0.034);
+    background-color: rgba(232, 231, 216, 0.803);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border: 2px solid rgba(255, 255, 255, 0.012);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    border-radius: 35px;
+    border-radius: 5px;
 }
 
 #loginField,
@@ -36,15 +37,15 @@ body {
 
 #button-container {
     display: flex;
-    color: whitesmoke;
+    color: black;
     margin: 5%;
     height: var(--height);
     display: grid;
     grid-auto-flow: column;
-    box-shadow: 0 0 20px 9px #ffdb861f;
-    border-radius: 30px;
+    /* box-shadow: 0 0 20px 9px #ffdb861f; */
+    border-radius: 5px;
     position: relative;
-    border: var(--border) solid #ffdb86aa;
+    border: var(--border) solid none;
 }
 
 .input-field {
@@ -55,7 +56,7 @@ body {
     border-bottom: 1px solid #999;
     outline: none;
     background: transparent;
-    color: #fff;
+    color: #3c3c3c;
 }
 
 *,
@@ -112,7 +113,8 @@ body {
 
 input:not(:checked)+label:hover {
     --highlight: 0.35;
-    font-weight: bolder;
+    /* font-weight: bolder; */
+    
 }
 
 
@@ -120,10 +122,11 @@ input:not(:checked)+label:hover {
     color: whitesmoke;
     pointer-events: none;
     content: "";
-    background: #ffdb86aa;
+    /* background: #3c3c3c; */
+    background: #3c3c3c5a
     ;
     position: absolute;
-    border-radius: 30px;
+    border-radius: 5px;
     /* mix-blend-mode: difference; */
     transition: inset, outline-color;
     transition-duration: var(--speed);
@@ -153,7 +156,7 @@ input:not(:checked)+label:hover {
     padding: 10px 30px;
     cursor: pointer;
     display: block;
-    background: #ffdb86aa;
+    /* background: #ffdb86aa; */
     border: 0;
     outline: none;
     border-radius: 30px;
@@ -184,15 +187,15 @@ input:not(:checked)+label:hover {
 
 #registerField button,
 #loginField button {
-    color: whitesmoke;
+    color: black;
     width: 50%;
     padding: 10px 30px;
     cursor: pointer;
     display: block;
-    background: #ffdb86aa;
+    background: #3c3c3c5a;
     border: 0;
     outline: none;
-    border-radius: 30px;
+    border-radius: 5px;
     font-family: Georgia, 'Times New Roman', Times, serif;
     position: relative;
     overflow: hidden;
@@ -201,10 +204,10 @@ input:not(:checked)+label:hover {
 
 #registerField button:hover,
 #loginField button:hover {
-    background: transparent;
-    color: #ffdb86aa;
+    background: black;
+    color: #bababa;
 }
-
+/* i like it */
 #registerField button:hover::after,
 #loginField button:hover::after {
     content: '';
@@ -213,9 +216,9 @@ input:not(:checked)+label:hover {
     left: 0;
     width: 100%;
     height: 100%;
-    border: 2px solid #ffdb86aa;
-    border-radius: 30px;
-    animation: borderAnimation 1s infinite;
+    border: 2px solid #b0b0b0;
+    border-radius: 5px;
+    animation: borderAnimation 3s infinite;
     pointer-events: none;
 }
 
