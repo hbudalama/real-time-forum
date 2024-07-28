@@ -25,6 +25,19 @@
         <form id="registerField" style="display: none;" class="input-group" action="/signup" method="post">
             <div id="registerError" class="error-message"></div>
             <input type="text" class="input-field" placeholder="Username" name="username" required>
+            <input type="fname" class="input-field" placeholder="First name" name="fname" required>
+            <input type="lname" class="input-field" placeholder="Last name" name="lname" required>
+            <label for="gender"> select your gender:</label>
+            <select class="gender" id="gender">
+                <option value="female">female</option>
+                <option value="male">male</option>
+            </select>
+            <legend>select your age:</legend>
+            <select class="selectAge" id="selectAge">
+                {{range .Ages}}
+                <option value="{{.}}">{{.}}</option>
+                {{end}}
+            </select>
             <input type="email" class="input-field" placeholder="Email" name="email" required>
             <input type="password" class="input-field" placeholder="Password" name="password" required>
             <input type="password" class="input-field" placeholder="Confirm Password" name="confirmPassword" required>

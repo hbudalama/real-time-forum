@@ -21,6 +21,12 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var Ages []int
+
+	for i := 16; i <= 70; i++ {
+		Ages = append(Ages, i)
+	}
+
 	if r.Method == "POST" {
 		var requestData struct {
 			UsernameOrEmail string `json:"username_or_email"`

@@ -21,6 +21,7 @@ func main() {
 
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
+
 	mux.HandleFunc("/login", server.LoginHandler)
 	mux.HandleFunc("/posts/", server.PostHandler)
 	mux.HandleFunc("/api/posts/{id}/comments", server.CommentsHandler)
