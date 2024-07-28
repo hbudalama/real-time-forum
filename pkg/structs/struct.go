@@ -69,3 +69,7 @@ type Message struct {
 	Content           string
 	CreatedDate       string
 }
+
+type PageData struct {
+    Ages []int
+}

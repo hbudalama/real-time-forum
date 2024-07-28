@@ -21,11 +21,11 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var Ages []int
+	// var Ages []int
 
-	for i := 16; i <= 70; i++ {
-		Ages = append(Ages, i)
-	}
+	// for i := 16; i <= 70; i++ {
+	// 	Ages = append(Ages, i)
+	// }
 
 	if r.Method == "POST" {
 		var requestData struct {
@@ -109,7 +109,15 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`{"message": "Login successful"}`))
 		return
 	}
-	http.ServeFile(w, r, filepath.Join("pages", "login.html"))
+
+	var Ages []int
+	for i:=16; i <= 70; i++ {
+		Ages = append(Ages, i)
+	}
+
+	data := structs.PageData{Ages: Ages}
+    tmpl := template.Must(template.ParseFiles(filepath.Join("pages", "login.html")))
+    tmpl.Execute(w, data)
 }
 
 func PostHandler(w http.ResponseWriter, r *http.Request) {
