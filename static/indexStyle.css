@@ -8,15 +8,16 @@
 .index {
     min-height: 100vh;
     width: 100%;
-    background: linear-gradient(to bottom right, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('/static/images/background.jpg');
+    /* background: linear-gradient(to bottom right, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('/static/images/background.jpg');
     background-position: center;
-    background-size: cover;
+    background-size: cover; */
+    background: black;
 }
 
 nav {
     display: flex;
     align-items: center;
-    background: #ffdb86aa;
+    background: rgba(255, 255, 255, 0.074);
     justify-content: space-between;
     padding: 10px 20px;
     position: sticky;
@@ -148,11 +149,13 @@ nav {
 .post-container {
     display: flex;
     flex-direction: column;
-    width: 100%;
-    background-color: rgba(255, 255, 255, 0.034);
+    width: 60%;
+    background-color: rgba(255, 255, 255, 0.074);
     padding: 20px;
     border-radius: 10px;
     color: #626262;
+    margin-top: 20px;
+    margin-left: 20px;
 }
 
 .user-profile {
@@ -185,8 +188,8 @@ nav {
 }
 
 .user-profile-post p {
-    font-weight: 500;
-    color: #626262;
+    font-weight: bolder;
+    color: rgba(232, 231, 216, 0.803);
 }
 
 
@@ -202,12 +205,13 @@ textarea {
 }
 
 .post {
-    width: 100%;
-    background-color: rgba(255, 255, 255, 0.034);
+    width: 60%;
+    background-color: rgba(255, 255, 255, 0.074);
     border-radius: 10px;
     padding: 20px;
     color: #626262;
-    margin: 20px 0;
+    margin: 20px 0px;
+    margin-left: 20px;
 }
 
 .post-text {
@@ -238,7 +242,7 @@ textarea {
 }
 
 .activity-icons a {
-    color: white;
+    color: rgba(232, 231, 216, 0.803);
 }
 
 .icon {
@@ -246,7 +250,7 @@ textarea {
     /* Adjust the size as needed */
     margin-right: 10px;
     cursor: pointer;
-    color: white;
+    color: rgba(232, 231, 216, 0.803);
 }
 
 .fa-thumbs-up:active {
@@ -356,7 +360,7 @@ button:hover {
 
 .user-profile p {
     font-weight: bolder;
-    color: #9a9a9a;
+    color: rgba(232, 231, 216, 0.803);
 }
 
 .post-title-link{
@@ -365,6 +369,7 @@ button:hover {
 }
 
 .post-title-link h2{
+    color: rgba(232, 231, 216, 0.803);
     margin-top: 16px;
     margin-bottom: 16px;
     padding: 4px;

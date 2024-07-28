@@ -8,7 +8,6 @@ body {
     justify-content: center;
     align-items: center;
 }
-
 #form {
     display: flex;
     flex-direction: column;
@@ -23,7 +22,6 @@ body {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     border-radius: 5px;
 }
-
 #loginField,
 #registerField {
     font-family: Georgia, 'Times New Roman', Times, serif;
@@ -34,7 +32,6 @@ body {
     align-items: center;
     margin-bottom: 10%;
 }
-
 #button-container {
     display: flex;
     color: black;
@@ -47,7 +44,6 @@ body {
     position: relative;
     border: var(--border) solid none;
 }
-
 .input-field {
     width: 100%;
     padding: 10px 0;
@@ -58,20 +54,17 @@ body {
     background: transparent;
     color: #3c3c3c;
 }
-
 *,
 *:after,
 *:before {
     box-sizing: border-box;
 }
-
 :root {
     --radius: 8px;
     --border: 1px;
     --height: 48px;
     --speed: 0.25s;
 }
-
 #button-container>input,
 .sr-only {
     position: absolute;
@@ -84,19 +77,15 @@ body {
     white-space: nowrap;
     border-width: 0;
 }
-
 #button-container:has(:checked:nth-of-type(1)) {
     --active: --choice-1;
 }
-
 #button-container:has(:checked:nth-of-type(2)) {
     --active: --choice-2;
 }
-
 #button-container :checked+label {
     --highlight: 1;
 }
-
 #button-container label {
     padding: 0 clamp(0.5rem, 2vw + 0.25rem, 2rem);
     cursor: pointer;
@@ -110,14 +99,11 @@ body {
     transition: background, color var(--speed) var(--ease, ease);
     font-family: Georgia, 'Times New Roman', Times, serif;
 }
-
 input:not(:checked)+label:hover {
     --highlight: 0.35;
     /* font-weight: bolder; */
     
 }
-
-
 #button-container::after {
     color: whitesmoke;
     pointer-events: none;
@@ -131,25 +117,19 @@ input:not(:checked)+label:hover {
     transition: inset, outline-color;
     transition-duration: var(--speed);
     transition-timing-function: var(--ease, ease);
-
     outline: 2px solid transparent;
     anchor-default: var(--active, --choice-1);
     inset: 0 anchor(var(--active) right) 0 anchor(var(--active) left);
 }
-
 #button-container:has(:focus-visible)::after {
-
     outline-color: rgb(0, 0, 0);
 }
-
 #button-container label:nth-of-type(1) {
     anchor-name: --choice-1;
 }
-
 #button-container label:nth-of-type(2) {
     anchor-name: --choice-2;
 }
-
 #registerField button {
     color: whitesmoke;
     width: 50%;
@@ -162,7 +142,6 @@ input:not(:checked)+label:hover {
     border-radius: 30px;
     font-family: Georgia, 'Times New Roman', Times, serif;
 }
-
 #loginField button {
     color: whitesmoke;
     width: 50%;
@@ -175,7 +154,6 @@ input:not(:checked)+label:hover {
     border-radius: 30px;
     font-family: Georgia, 'Times New Roman', Times, serif;
 }
-
 #registerField button:hover,
 #loginField button:hover {
     background: transparent;
@@ -184,7 +162,6 @@ input:not(:checked)+label:hover {
     border-color: #ffdb86aa;
     transition: .3s;
 }
-
 #registerField button,
 #loginField button {
     color: black;
@@ -201,7 +178,6 @@ input:not(:checked)+label:hover {
     overflow: hidden;
     transition: background 0.3s ease, color 0.3s ease;
 }
-
 #registerField button:hover,
 #loginField button:hover {
     background: black;
@@ -221,29 +197,23 @@ input:not(:checked)+label:hover {
     animation: borderAnimation 3s infinite;
     pointer-events: none;
 }
-
 @keyframes borderAnimation {
     0% {
         clip-path: polygon(0% 0%, 100% 0%, 100% 0%, 0% 0%);
     }
-
     25% {
         clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 0%);
     }
-
     50% {
         clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%);
     }
-
     75% {
         clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%);
     }
-
     100% {
         clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 0%);
     }
 }
-
 .error-message {
     color: red;
     margin-bottom: 10px;
