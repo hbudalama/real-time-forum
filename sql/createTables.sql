@@ -72,6 +72,8 @@ CREATE TABLE IF NOT EXISTS Chat (
     FOREIGN KEY (RecipientUsername) REFERENCES User(username)
 );
 
-CREATE TABLE IF NOT EXISTS Notifications (
-    -- add later
-);
+-- THIS WAS CAUSING AN ERROR BECAUSE IT WAS EMPTY!!
+
+-- CREATE TABLE IF NOT EXISTS Notifications (
+--     -- add later
+-- );

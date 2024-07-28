@@ -19,7 +19,7 @@ nav {
     align-items: center;
     background: rgba(255, 255, 255, 0.074);
     justify-content: space-between;
-    padding: 10px 20px;
+    padding: 0px 20px;
     position: sticky;
     top: 0;
     width: 100%;
@@ -27,7 +27,8 @@ nav {
 }
 
 .logo {
-    width: 100px;
+    width: 800px;
+    margin-left: 350px;
 }
 
 .nav-left,
@@ -37,9 +38,10 @@ nav {
 }
 
 .user-icon img {
-    width: 30px;
+    width: 45px;
     border-radius: 50%;
     cursor: pointer;
+    
 }
 
 .user-icon {
@@ -99,6 +101,11 @@ nav {
     margin-left: 10px;
 }
 
+.user-list-profile {
+    width: 45px;
+    border-radius: 50%;
+    cursor: pointer;
+}
 .filter-section {
     margin-bottom: 20px;
     margin-top: 15px;
