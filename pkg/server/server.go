@@ -21,24 +21,19 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// var Ages []int
-
-	// for i := 16; i <= 70; i++ {
-	// 	Ages = append(Ages, i)
-	// }
-
 	if r.Method == "POST" {
 		var requestData struct {
-			UsernameOrEmail string `json:"username_or_email"`
+			// UsernameOrEmail string `json:"username_or_email"`
+			Username string `json:"username"`
 			Password        string `json:"password"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&requestData); err != nil {
 			Error400Handler(w, r)
 			return
 		}
-		usernameOrEmail := strings.TrimSpace(requestData.UsernameOrEmail)
+		username := strings.TrimSpace(requestData.Username)
 		password := strings.TrimSpace(requestData.Password)
-		if usernameOrEmail == "" {
+		if username == "" {
 			Error400Handler(w, r)
 			return
 		}
@@ -47,29 +42,29 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		var username string
-		var err error
+		// var username string
+		// var err error
 
 		// Check if the input is an email or a username
-		if strings.Contains(usernameOrEmail, "@") {
-			exists, err := db.CheckEmailExists(usernameOrEmail)
-			if err != nil {
-				log.Printf("LoginHandler: Error checking email: %s\n", err.Error())
-				Error500Handler(w, r)
-				return
-			}
-			if !exists {
-				http.Error(w, `{"reason": "Email not found"}`, http.StatusNotFound)
-				return
-			}
-			username, err = db.GetUsernameByEmail(usernameOrEmail)
-			if err != nil {
-				log.Printf("LoginHandler: Error getting username by email: %s\n", err.Error())
-				Error500Handler(w, r)
-				return
-			}
-		} else {
-			exists, err := db.CheckUsernameExists(usernameOrEmail)
+		// if strings.Contains(usernameOrEmail, "@") {
+		// 	exists, err := db.CheckEmailExists(usernameOrEmail)
+		// 	if err != nil {
+		// 		log.Printf("LoginHandler: Error checking email: %s\n", err.Error())
+		// 		Error500Handler(w, r)
+		// 		return
+		// 	}
+		// 	if !exists {
+		// 		http.Error(w, `{"reason": "Email not found"}`, http.StatusNotFound)
+		// 		return
+		// 	}
+		// 	username, err = db.GetUsernameByEmail(usernameOrEmail)
+		// 	if err != nil {
+		// 		log.Printf("LoginHandler: Error getting username by email: %s\n", err.Error())
+		// 		Error500Handler(w, r)
+		// 		return
+		// 	}
+		// } else {
+			exists, err := db.CheckUsernameExists(username)
 			if err != nil {
 				log.Printf("LoginHandler: Error checking username: %s\n", err.Error())
 				Error500Handler(w, r)
@@ -79,8 +74,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, `{"reason": "Username not found"}`, http.StatusNotFound)
 				return
 			}
-			username = usernameOrEmail
-		}
+			// username = usernameOrEmail
+		// }
 
 		passwordMatches, err := db.CheckPassword(username, password)
 		if err != nil {
@@ -235,11 +230,11 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 
 	var requestData struct {
 		Username        string `json:"username"`
+		FirstName       string `json:"firstName"`
+		LastName        string `json:"lastName"`
+		Gender          string   `json:"gender"`
+		Age             string   `json:"age"`
 		Email           string `json:"email"`
-		FirstName       string `json:"first_name"`
-		LastName        string `json:"last_name"`
-		Age             int    `json:"age"`
-		Gender          bool   `json:"gender"`
 		Password        string `json:"password"`
 		ConfirmPassword string `json:"confirmPassword"`
 	}
@@ -250,36 +245,47 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	username := strings.TrimSpace(requestData.Username)
-	email := strings.TrimSpace(requestData.Email)
 	firstName := strings.TrimSpace(requestData.FirstName)
 	lastName := strings.TrimSpace(requestData.LastName)
-	age := requestData.Age
-	gender := requestData.Gender
+	email := strings.TrimSpace(requestData.Email)
 	password := strings.TrimSpace(requestData.Password)
 	confirmPassword := strings.TrimSpace(requestData.ConfirmPassword)
 
+	var gender bool
+	if requestData.Gender == "1" {
+		gender = true
+	} else {
+		gender = false
+	}
+
+	age, err := strconv.Atoi(requestData.Age)
+    if err != nil {
+        http.Error(w, `{"signupHandler": "Invalid age format"}`, http.StatusBadRequest)
+        return
+    }
+
 	if username == "" {
-		http.Error(w, `{"reason": "Username is required"}`, http.StatusBadRequest)
+		http.Error(w, `{"signupHandler": "Username is required"}`, http.StatusBadRequest)
 		return
 	}
 	if email == "" {
-		http.Error(w, `{"reason": "Email is required"}`, http.StatusBadRequest)
+		http.Error(w, `{"signupHandler": "Email is required"}`, http.StatusBadRequest)
 		return
 	}
 	if !validEmail(email) {
-		http.Error(w, `{"reason": "Invalid email format"}`, http.StatusBadRequest)
+		http.Error(w, `{"signupHandler": "Invalid email format"}`, http.StatusBadRequest)
 		return
 	}
 	if password == "" {
-		http.Error(w, `{"reason": "Password is required"}`, http.StatusBadRequest)
+		http.Error(w, `{"signupHandler": "Password is required"}`, http.StatusBadRequest)
 		return
 	}
 	if !validatePassword(password) {
-		http.Error(w, `{"reason": "Password must be at least 8 characters long"}`, http.StatusBadRequest)
+		http.Error(w, `{"signupHandler": "Password must be at least 8 characters long"}`, http.StatusBadRequest)
 		return
 	}
 	if password != confirmPassword {
-		http.Error(w, `{"reason": "Passwords do not match"}`, http.StatusBadRequest)
+		http.Error(w, `{"signupHandler": "Passwords do not match"}`, http.StatusBadRequest)
 		return
 	}
 
@@ -289,7 +295,7 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if exists {
-		http.Error(w, `{"reason": "Username already taken"}`, http.StatusBadRequest)
+		http.Error(w, `{"signupHandler": "Username already taken"}`, http.StatusBadRequest)
 		return
 	}
 
@@ -299,7 +305,7 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if emailExists {
-		http.Error(w, `{"reason": "Email already taken"}`, http.StatusBadRequest)
+		http.Error(w, `{"signupHandler": "Email already taken"}`, http.StatusBadRequest)
 		return
 	}
 
@@ -308,7 +314,7 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 		Error500Handler(w, r)
 		return
 	}
-	_, err = db.AddUser(username, email, firstName, lastName, age, gender, string(hashedPassword))
+	_, err = db.AddUser(username, firstName, lastName, gender, age, email, string(hashedPassword))
 	if err != nil {
 		errMsg := fmt.Sprintf(`{"reason": "%s"}`, err.Error())
 		http.Error(w, errMsg, http.StatusBadRequest)
@@ -321,6 +327,8 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 		"success": true,
 	})
 }
+
+
 
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {

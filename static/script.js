@@ -62,6 +62,10 @@ document.addEventListener('DOMContentLoaded', () => {
     registerField.addEventListener('submit', (e) => {
         e.preventDefault();
         const username = registerField.querySelector('input[name="username"]').value;
+        const firstName = registerField.querySelector('input[name="firstName"]').value;
+        const lastName = registerField.querySelector('input[name="lastName"]').value;
+        const gender = registerField.querySelector('select[name="gender"]').value;
+        const age = registerField.querySelector('select[name="age"]').value;
         const email = registerField.querySelector('input[name="email"]').value;
         const password = registerField.querySelector('input[name="password"]').value;
         const confirmPassword = registerField.querySelector('input[name="confirmPassword"]').value;
@@ -83,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const requestData = { username, email, password, confirmPassword };
+        const requestData = { username, firstName, lastName, gender, age, email, password, confirmPassword };
         console.log("Signup request data:", requestData);
 
         fetch('/signup', {

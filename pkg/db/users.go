@@ -4,23 +4,29 @@ import (
 	"database/sql"
 	"errors"
 	"log"
-	"strings"
-	"github.com/mattn/go-sqlite3"
 	"rtf/pkg/structs"
+	"strings"
+
+	"github.com/mattn/go-sqlite3"
 )
 
-func AddUser(username string, email string, firstName string, lastName string, age int, gender bool, hashedPassword string) (*structs.User, error) {
+func AddUser(username string, firstName string, lastName string, gender bool, age int, email string, hashedPassword string) (*structs.User, error) {
     // Insert user into the database
     dbMutex.Lock()
     defer dbMutex.Unlock()
 
-    _, err := db.Exec("INSERT INTO User (username, email, firstName, lastName, age, gender, password) VALUES (?, ?, ?, ?, ?, ?, ?)", 
-        username, email, firstName, lastName, age, gender, hashedPassword)
+    genderInt := 0
+    if gender {
+        genderInt = 1
+    }
+
+    _, err := db.Exec("INSERT INTO User (Username, firstName, lastName, gender, age, email, password) VALUES (?, ?, ?, ?, ?, ?, ?)", 
+        username, firstName, lastName, genderInt, age, email, hashedPassword)
     if err != nil {
-        log.Printf("AddUser: %s\n", err.Error())
+        log.Printf("AddUser here: %s\n", err.Error())
         sqliteErr, ok := err.(sqlite3.Error)
         if ok && sqliteErr.ExtendedCode == sqlite3.ErrConstraintUnique {
-            if strings.Contains(sqliteErr.Error(), "username") {
+            if strings.Contains(sqliteErr.Error(), "Username") {
                 return nil, errors.New("username already exists")
             } else if strings.Contains(sqliteErr.Error(), "email") {
                 return nil, errors.New("email already exists")
@@ -32,6 +38,7 @@ func AddUser(username string, email string, firstName string, lastName string, a
 
     return nil, nil
 }
+
 
 func GetUser(username string) (*structs.User, error) {
 	user := structs.User{}

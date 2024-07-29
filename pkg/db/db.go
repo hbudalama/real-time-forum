@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"sync"
+	"log"
+	"strings"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -83,18 +85,28 @@ func GetHashedPasswordByUsername(username string) (string, error) {
 }
 
 func CheckEmailExists(email string) (bool, error) {
-	var foundEmail string
-	dbMutex.Lock()
-	defer dbMutex.Unlock()
-	err := db.QueryRow("SELECT email FROM user WHERE email = ?", email).Scan(&foundEmail)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return false, nil
-		}
-		return false, err
-	}
-	return true, nil
+    var foundEmail string
+    dbMutex.Lock()
+    defer dbMutex.Unlock()
+    
+    email = strings.TrimSpace(email) // Trim whitespace
+
+    log.Printf("Checking email existence for: %s", email) // Debugging line
+
+    err := db.QueryRow("SELECT email FROM user WHERE email = ?", email).Scan(&foundEmail)
+    if err != nil {
+        if err == sql.ErrNoRows {
+            return false, nil
+        }
+        log.Printf("Error querying email: %v", err) // Debugging line
+        return false, err
+    }
+
+    log.Printf("Email found: %s", foundEmail) // Debugging line
+    return true, nil
 }
+
+
 
 func GetUsernameByEmail(email string) (string, error) {
 	var username string

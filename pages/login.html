@@ -1,13 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/static/style.css">
     <title>Forum</title>
 </head>
-
 <body>
     <div id="form">
         <div id="button-container">
@@ -25,15 +23,15 @@
         <form id="registerField" style="display: none;" class="input-group" action="/signup" method="post">
             <div id="registerError" class="error-message"></div>
             <input type="text" class="input-field" placeholder="Username" name="username" required>
-            <input type="fname" class="input-field" placeholder="First name" name="fname" required>
-            <input type="lname" class="input-field" placeholder="Last name" name="lname" required>
+            <input type="text" class="input-field" placeholder="First name" name="firstName" required>
+            <input type="text" class="input-field" placeholder="Last name" name="lastName" required>
             <label for="gender"> select your gender:</label>
-            <select class="gender" id="gender">
-                <option value="female">female</option>
-                <option value="male">male</option>
+            <select class="gender" id="gender" name="gender">
+                <option value="1">female</option>
+                <option value="0">male</option>
             </select>
             <legend>select your age:</legend>
-            <select class="selectAge" id="selectAge">
+            <select class="selectAge" id="selectAge" name="age">
                 {{range .Ages}}
                 <option value="{{.}}">{{.}}</option>
                 {{end}}
@@ -45,6 +43,33 @@
         </form>
     </div>
     <script src="/static/script.js"></script>
-</body>
+    <script>
+        document.getElementById("registerField").addEventListener("submit", function(event) {
+            event.preventDefault();
 
+            const formData = new FormData(this);
+            const jsonObject = {};
+            formData.forEach((value, key) => jsonObject[key] = value);
+
+            fetch("/signup", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(jsonObject)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert("Registration successful!");
+                } else {
+                    alert("Registration failed: " + data.reason);
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+            });
+        });
+    </script>
+</body>
 </html>

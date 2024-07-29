@@ -1,10 +1,10 @@
 CREATE TABLE IF NOT EXISTS User (
     Username            TEXT PRIMARY KEY,
-    email               TEXT NOT NULL UNIQUE,
     firstName           TEXT NOT NULL,
     lastName            TEXT NOT NULL,
-    age                 INTEGER NOT NULL,
     gender              INTEGER NOT NULL CHECK (gender IN (0, 1)), -- 1 for female, 0 for male
+    age                 INTEGER NOT NULL,
+    email               TEXT NOT NULL UNIQUE,
     password            TEXT NOT NULL,
     sessionToken        TEXT,
     sessionExpiration   DATETIME
