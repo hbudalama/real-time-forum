@@ -53,3 +53,24 @@ func GetUser(username string) (*structs.User, error) {
 
 	return &user, nil
 }
+
+func GetAllUsers() ([]structs.User, error) {
+    rows, err := db.Query("SELECT username, email, firstName, lastName, age, gender FROM user")
+    if err != nil {
+        log.Printf("error retreiving users %v", err)
+        return nil, err
+    }
+    defer rows.Close()
+
+    var users []structs.User
+    for rows.Next() {
+        var user structs.User
+        err := rows.Scan(&user.Username, &user.Email, &user.FirstName, &user.LastName, &user.Age, &user.Gender)
+        if err != nil {
+            log.Printf("error scanning user row %v", err)
+            continue
+        }
+        users = append(users, user)
+    }
+    return users, nil
+}

@@ -361,6 +361,14 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctx.Posts = db.GetAllPosts()
 
+	users, err := db.GetAllUsers()
+	if err != nil {
+		log.Printf("error getting users %s", err.Error())
+		Error500Handler(w, r)
+		return
+	}
+	ctx.Users = users
+
 	tmpl, err := template.ParseFiles(filepath.Join("pages", "index.html"))
 	if err != nil {
 		log.Printf("can't parse the template here: %s\n", err.Error())

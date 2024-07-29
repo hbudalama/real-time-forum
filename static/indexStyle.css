@@ -386,3 +386,34 @@ button:hover {
     color: red;
     margin-bottom: 10px;
 }
+
+.left-sidebar {
+    width: 200px; /* Adjust as needed */
+    padding: 10px;
+    background-color: #333; /* Adjust as needed */
+    color: #fff; /* Adjust as needed */
+}
+
+.users-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.user-list-profile {
+    display: flex;
+    align-items: center;
+    padding: 5px 0; /* Adjust as needed */
+}
+
+.user-icon {
+    width: 30px; /* Adjust as needed */
+    height: 30px; /* Adjust as needed */
+    margin-right: 10px; /* Adjust spacing as needed */
+}
+
+.username {
+    margin: 0;
+    font-size: 16px; /* Adjust as needed */
+    color: #fff; /* Adjust as needed */
+}

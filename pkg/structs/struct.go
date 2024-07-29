@@ -7,8 +7,8 @@ type User struct {
 	Email     string
 	FirstName string
 	LastName  string
-	age       int
-	gender    int
+	Age       int
+	Gender    int
 }
 
 type Post struct {
@@ -54,6 +54,7 @@ type HomeContext struct {
 	LoggedInUser *User
 	Posts        []Post
 	ErrorMessage string
+	Users        []User
 }
 
 type PostContext struct {
@@ -71,5 +72,5 @@ type Message struct {
 }
 
 type PageData struct {
-    Ages []int
+	Ages []int
 }
