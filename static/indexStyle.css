@@ -17,7 +17,7 @@
 nav {
     display: flex;
     align-items: center;
-    background: rgba(255, 255, 255, 0.074);
+    background: rgba(0, 0, 0, 0.074);
     justify-content: space-between;
     padding: 0px 20px;
     position: sticky;
@@ -213,7 +213,7 @@ textarea {
 
 .post {
     width: 60%;
-    background-color: rgba(255, 255, 255, 0.074);
+    background-color: #333;
     border-radius: 10px;
     padding: 20px;
     color: #626262;
@@ -389,9 +389,14 @@ button:hover {
 
 .left-sidebar {
     width: 200px; /* Adjust as needed */
+    height: 600px;
     padding: 10px;
     background-color: #333; /* Adjust as needed */
     color: #fff; /* Adjust as needed */
+}
+
+.index img {
+    
 }
 
 .users-list {
