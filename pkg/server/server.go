@@ -605,3 +605,21 @@ func RenderAddPostForm(w http.ResponseWriter, r *http.Request, errorMessage stri
 		return
 	}
 }
+
+func PostAPIHandler(w http.ResponseWriter, r *http.Request) {
+    postIDStr := r.URL.Path[len("/api/posts/"):] // Extract the post ID from the URL
+    postID, err := strconv.Atoi(postIDStr) // Convert the post ID to an integer
+    if err != nil { // Handle error if the post ID is not a valid integer
+        http.Error(w, "Invalid post ID", http.StatusBadRequest)
+        return
+    }
+
+    post, err := db.GetPost(postID) // Retrieve the post details from the database using the post ID
+    if err != nil { // Handle error if the post is not found
+        http.Error(w, "Post not found", http.StatusNotFound)
+        return
+    }
+
+    w.Header().Set("Content-Type", "application/json") // Set the response content type to JSON
+    json.NewEncoder(w).Encode(post) // Encode the post data as JSON and write it to the response
+}
