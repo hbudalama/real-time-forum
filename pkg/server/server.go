@@ -263,32 +263,32 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 
 	age, err := strconv.Atoi(requestData.Age)
 	if err != nil {
-		http.Error(w, `{"signupHandler": "Invalid age format"}`, http.StatusBadRequest)
+		http.Error(w, `{"reason": "Invalid age format"}`, http.StatusBadRequest)
 		return
 	}
 
 	if username == "" {
-		http.Error(w, `{"signupHandler": "Username is required"}`, http.StatusBadRequest)
+		http.Error(w, `{"reason": "Username is required"}`, http.StatusBadRequest)
 		return
 	}
 	if email == "" {
-		http.Error(w, `{"signupHandler": "Email is required"}`, http.StatusBadRequest)
+		http.Error(w, `{"reason": "Email is required"}`, http.StatusBadRequest)
 		return
 	}
 	if !validEmail(email) {
-		http.Error(w, `{"signupHandler": "Invalid email format"}`, http.StatusBadRequest)
+		http.Error(w, `{"reason": "Invalid email format"}`, http.StatusBadRequest)
 		return
 	}
 	if password == "" {
-		http.Error(w, `{"signupHandler": "Password is required"}`, http.StatusBadRequest)
+		http.Error(w, `{"reason": "Password is required"}`, http.StatusBadRequest)
 		return
 	}
 	if !validatePassword(password) {
-		http.Error(w, `{"signupHandler": "Password must be at least 8 characters long"}`, http.StatusBadRequest)
+		http.Error(w, `{"reason": "Password must be at least 8 characters long"}`, http.StatusBadRequest)
 		return
 	}
 	if password != confirmPassword {
-		http.Error(w, `{"signupHandler": "Passwords do not match"}`, http.StatusBadRequest)
+		http.Error(w, `{"reason": "Passwords do not match"}`, http.StatusBadRequest)
 		return
 	}
 
@@ -298,7 +298,7 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if exists {
-		http.Error(w, `{"signupHandler": "Username already taken"}`, http.StatusBadRequest)
+		http.Error(w, `{"reason": "Username already taken"}`, http.StatusBadRequest)
 		return
 	}
 
@@ -308,7 +308,7 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if emailExists {
-		http.Error(w, `{"signupHandler": "Email already taken"}`, http.StatusBadRequest)
+		http.Error(w, `{"reason": "Email already taken"}`, http.StatusBadRequest)
 		return
 	}
 
