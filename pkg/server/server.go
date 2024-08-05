@@ -23,50 +23,53 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == "POST" {
 		var requestData struct {
-			// UsernameOrEmail string `json:"username_or_email"`
-			Username string `json:"username"`
+			UsernameOrEmail string `json:"username"`
 			Password        string `json:"password"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&requestData); err != nil {
-			Error400Handler(w, r)
+			Error400Handler(w, r, "can't decode body")
 			return
 		}
-		username := strings.TrimSpace(requestData.Username)
+
+		identifier := strings.TrimSpace(requestData.UsernameOrEmail)
 		password := strings.TrimSpace(requestData.Password)
-		if username == "" {
-			Error400Handler(w, r)
+		fmt.Println(identifier)
+		if identifier == "" {
+			Error400Handler(w, r, "Emptry username")
 			return
 		}
 		if password == "" {
-			Error400Handler(w, r)
+			Error400Handler(w, r, "Empty password")
 			return
 		}
 
-		// var username string
-		// var err error
+		var username string
+		var exists bool
+		var err error
 
-		// Check if the input is an email or a username
-		// if strings.Contains(usernameOrEmail, "@") {
-		// 	exists, err := db.CheckEmailExists(usernameOrEmail)
-		// 	if err != nil {
-		// 		log.Printf("LoginHandler: Error checking email: %s\n", err.Error())
-		// 		Error500Handler(w, r)
-		// 		return
-		// 	}
-		// 	if !exists {
-		// 		http.Error(w, `{"reason": "Email not found"}`, http.StatusNotFound)
-		// 		return
-		// 	}
-		// 	username, err = db.GetUsernameByEmail(usernameOrEmail)
-		// 	if err != nil {
-		// 		log.Printf("LoginHandler: Error getting username by email: %s\n", err.Error())
-		// 		Error500Handler(w, r)
-		// 		return
-		// 	}
-		// } else {
-			exists, err := db.CheckUsernameExists(username)
+		if strings.Contains(identifier, "@") {
+			// Check if it's an email
+			exists, err = db.CheckEmailExists(identifier)
 			if err != nil {
-				log.Printf("reason: Error checking username: %s\n", err.Error())
+				log.Printf("LoginHandler: Error checking email: %s\n", err.Error())
+				Error500Handler(w, r)
+				return
+			}
+			if !exists {
+				http.Error(w, `{"reason": "Email not found"}`, http.StatusNotFound)
+				return
+			}
+			username, err = db.GetUsernameByEmail(identifier)
+			if err != nil {
+				log.Printf("LoginHandler: Error getting username by email: %s\n", err.Error())
+				Error500Handler(w, r)
+				return
+			}
+		} else {
+			// Check if it's a username
+			exists, err = db.CheckUsernameExists(identifier)
+			if err != nil {
+				log.Printf("LoginHandler: Error checking username: %s\n", err.Error())
 				Error500Handler(w, r)
 				return
 			}
@@ -74,12 +77,12 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, `{"reason": "Username not found"}`, http.StatusNotFound)
 				return
 			}
-			// username = usernameOrEmail
-		// }
+			username = identifier
+		}
 
 		passwordMatches, err := db.CheckPassword(username, password)
 		if err != nil {
-			log.Printf("reason: Error checking password: %s\n", err.Error())
+			log.Printf("LoginHandler: Error checking password: %s\n", err.Error())
 			Error500Handler(w, r)
 			return
 		}
@@ -90,7 +93,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 		token, err := db.CreateSession(username)
 		if err != nil {
-			log.Printf("reason: Error creating session: %s\n", err.Error())
+			log.Printf("LoginHandler: Error creating session: %s\n", err.Error())
 			Error500Handler(w, r)
 			return
 		}
@@ -99,27 +102,28 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 			Value:    token,
 			Expires:  time.Now().Add(24 * time.Hour),
 			HttpOnly: true,
+			Path:     "/",
 		})
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"reason": "Login successful"}`))
+		w.Write([]byte(`{"message": "Login successful"}`))
 		return
 	}
 
 	var Ages []int
-	for i:=16; i <= 70; i++ {
+	for i := 16; i <= 70; i++ {
 		Ages = append(Ages, i)
 	}
 
 	data := structs.PageData{Ages: Ages}
-    tmpl := template.Must(template.ParseFiles(filepath.Join("pages", "login.html")))
-    tmpl.Execute(w, data)
+	tmpl := template.Must(template.ParseFiles(filepath.Join("pages", "login.html")))
+	tmpl.Execute(w, data)
 }
 
 func PostHandler(w http.ResponseWriter, r *http.Request) {
 	postIDStr := r.URL.Path[len("posts/"):]
 	postID, err := strconv.Atoi(postIDStr)
 	if err != nil {
-		Error400Handler(w, r)
+		Error400Handler(w, r, "invalid post id")
 		return
 	}
 
@@ -159,7 +163,6 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	tmpl.Execute(w, data)
 }
-
 
 func GetPostHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
@@ -232,8 +235,8 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 		Username        string `json:"username"`
 		FirstName       string `json:"firstName"`
 		LastName        string `json:"lastName"`
-		Gender          string   `json:"gender"`
-		Age             string   `json:"age"`
+		Gender          string `json:"gender"`
+		Age             string `json:"age"`
 		Email           string `json:"email"`
 		Password        string `json:"password"`
 		ConfirmPassword string `json:"confirmPassword"`
@@ -259,33 +262,33 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	age, err := strconv.Atoi(requestData.Age)
-    if err != nil {
-        http.Error(w, `{"reason": "Invalid age format"}`, http.StatusBadRequest)
-        return
-    }
+	if err != nil {
+		http.Error(w, `{"signupHandler": "Invalid age format"}`, http.StatusBadRequest)
+		return
+	}
 
 	if username == "" {
-		http.Error(w, `{"reason": "Username is required"}`, http.StatusBadRequest)
+		http.Error(w, `{"signupHandler": "Username is required"}`, http.StatusBadRequest)
 		return
 	}
 	if email == "" {
-		http.Error(w, `{"reason": "Email is required"}`, http.StatusBadRequest)
+		http.Error(w, `{"signupHandler": "Email is required"}`, http.StatusBadRequest)
 		return
 	}
 	if !validEmail(email) {
-		http.Error(w, `{"reason": "Invalid email format"}`, http.StatusBadRequest)
+		http.Error(w, `{"signupHandler": "Invalid email format"}`, http.StatusBadRequest)
 		return
 	}
 	if password == "" {
-		http.Error(w, `{"reason": "Password is required"}`, http.StatusBadRequest)
+		http.Error(w, `{"signupHandler": "Password is required"}`, http.StatusBadRequest)
 		return
 	}
 	if !validatePassword(password) {
-		http.Error(w, `{"reason": "Password must be at least 8 characters long"}`, http.StatusBadRequest)
+		http.Error(w, `{"signupHandler": "Password must be at least 8 characters long"}`, http.StatusBadRequest)
 		return
 	}
 	if password != confirmPassword {
-		http.Error(w, `{"reason": "Passwords do not match"}`, http.StatusBadRequest)
+		http.Error(w, `{"signupHandler": "Passwords do not match"}`, http.StatusBadRequest)
 		return
 	}
 
@@ -295,7 +298,7 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if exists {
-		http.Error(w, `{"reason": "Username already taken"}`, http.StatusBadRequest)
+		http.Error(w, `{"signupHandler": "Username already taken"}`, http.StatusBadRequest)
 		return
 	}
 
@@ -305,7 +308,7 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if emailExists {
-		http.Error(w, `{"reason": "Email already taken"}`, http.StatusBadRequest)
+		http.Error(w, `{"signupHandler": "Email already taken"}`, http.StatusBadRequest)
 		return
 	}
 
@@ -327,8 +330,6 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 		"success": true,
 	})
 }
-
-
 
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
@@ -546,16 +547,22 @@ func NewestPostsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func Error400Handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("400")
+func Error400Handler(w http.ResponseWriter, r *http.Request, reason string) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusBadRequest)
+	w.Write([]byte(`{"reason": "` + reason + `"}`))
 }
 
 func Error500Handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("400")
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusInternalServerError)
+	w.Write([]byte(`{"reason": "Interval Server Error"}`))
 }
 
 func Error404Handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("404")
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusNotFound)
+	w.Write([]byte(`{"reason": "Not found"}`))
 }
 
 func validEmail(email string) bool {
@@ -607,19 +614,19 @@ func RenderAddPostForm(w http.ResponseWriter, r *http.Request, errorMessage stri
 }
 
 func PostAPIHandler(w http.ResponseWriter, r *http.Request) {
-    postIDStr := r.URL.Path[len("/api/posts/"):] // Extract the post ID from the URL
-    postID, err := strconv.Atoi(postIDStr) // Convert the post ID to an integer
-    if err != nil { // Handle error if the post ID is not a valid integer
-        http.Error(w, "Invalid post ID", http.StatusBadRequest)
-        return
-    }
+	postIDStr := r.URL.Path[len("/api/posts/"):] // Extract the post ID from the URL
+	postID, err := strconv.Atoi(postIDStr)       // Convert the post ID to an integer
+	if err != nil {                              // Handle error if the post ID is not a valid integer
+		http.Error(w, "Invalid post ID", http.StatusBadRequest)
+		return
+	}
 
-    post, err := db.GetPost(postID) // Retrieve the post details from the database using the post ID
-    if err != nil { // Handle error if the post is not found
-        http.Error(w, "Post not found", http.StatusNotFound)
-        return
-    }
+	post, err := db.GetPost(postID) // Retrieve the post details from the database using the post ID
+	if err != nil {                 // Handle error if the post is not found
+		http.Error(w, "Post not found", http.StatusNotFound)
+		return
+	}
 
-    w.Header().Set("Content-Type", "application/json") // Set the response content type to JSON
-    json.NewEncoder(w).Encode(post) // Encode the post data as JSON and write it to the response
+	w.Header().Set("Content-Type", "application/json") // Set the response content type to JSON
+	json.NewEncoder(w).Encode(post)                    // Encode the post data as JSON and write it to the response
 }

@@ -59,7 +59,7 @@ func AddLikesHandler(w http.ResponseWriter, r *http.Request) {
 	postID, err := strconv.Atoi(postIDStr)
 	if err != nil {
 		//http.Error(w, "Invalid post ID", http.StatusBadRequest)
-		Error400Handler(w, r)
+		Error400Handler(w, r, "invalid post ID")
 		return
 	}
 
