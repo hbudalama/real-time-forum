@@ -45,11 +45,6 @@ func GetComments(postID int) ([]structs.Comment, error) {
 }
 
 func AddComment(PostID int, username string, Content string) error {
-	fmt.Println("i am here 1")
-	// if !postExists(PostID) {
-	// 	return errors.New("post does not exist")
-	// }   this  vis not working
-	fmt.Println("i am here nowww ")
 	_, err := db.Exec("INSERT INTO Comment (PostID, username, Content) VALUES ($1, $2, $3)", PostID, username, Content)
 	fmt.Println("i am here at end")
 	if err != nil {

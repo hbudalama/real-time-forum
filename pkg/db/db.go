@@ -106,8 +106,6 @@ func CheckEmailExists(email string) (bool, error) {
     return true, nil
 }
 
-
-
 func GetUsernameByEmail(email string) (string, error) {
 	var username string
 	dbMutex.Lock()

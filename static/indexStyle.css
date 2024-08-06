@@ -8,9 +8,6 @@
 .index {
     min-height: 100vh;
     width: 100%;
-    /* background: linear-gradient(to bottom right, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('/static/images/background.jpg');
-    background-position: center;
-    background-size: cover; */
     background: black;
 }
 
@@ -46,27 +43,6 @@ nav {
 
 .user-icon {
     margin-left: 15px;
-}
-
-.search-bar {
-    background: rgb(255, 255, 255);
-    width: 350px;
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    padding: 0 15px;
-}
-
-.search-bar img {
-    width: 19px;
-}
-
-.search-bar input {
-    width: 100%;
-    background: transparent;
-    padding: 10px;
-    outline: none;
-    border: 0;
 }
 
 .online {
