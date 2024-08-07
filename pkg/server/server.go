@@ -27,6 +27,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 			Password        string `json:"password"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&requestData); err != nil {
+			http.Error(w, `{reason: cant decode body}`, http.StatusBadRequest)
 			Error400Handler(w, r, "can't decode body")
 			return
 		}
@@ -35,10 +36,12 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		password := strings.TrimSpace(requestData.Password)
 		fmt.Println(identifier)
 		if identifier == "" {
+			http.Error(w, `{reason: empty username}`, http.StatusBadRequest)
 			Error400Handler(w, r, "Emptry username")
 			return
 		}
 		if password == "" {
+			http.Error(w, `{reason: empty password}`, http.StatusBadRequest)
 			Error400Handler(w, r, "Empty password")
 			return
 		}
@@ -51,7 +54,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 			// Check if it's an email
 			exists, err = db.CheckEmailExists(identifier)
 			if err != nil {
-				log.Printf("LoginHandler: Error checking email: %s\n", err.Error())
+				http.Error(w, `{"reason": "Server error"}`, http.StatusInternalServerError)
 				Error500Handler(w, r)
 				return
 			}
@@ -61,7 +64,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			username, err = db.GetUsernameByEmail(identifier)
 			if err != nil {
-				log.Printf("LoginHandler: Error getting username by email: %s\n", err.Error())
+				http.Error(w, `{"reason": "Server error"}`, http.StatusInternalServerError)
 				Error500Handler(w, r)
 				return
 			}
@@ -69,7 +72,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 			// Check if it's a username
 			exists, err = db.CheckUsernameExists(identifier)
 			if err != nil {
-				log.Printf("LoginHandler: Error checking username: %s\n", err.Error())
+				http.Error(w, `{"reason": "Server error"}`, http.StatusInternalServerError)
 				Error500Handler(w, r)
 				return
 			}
@@ -82,7 +85,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 		passwordMatches, err := db.CheckPassword(username, password)
 		if err != nil {
-			log.Printf("LoginHandler: Error checking password: %s\n", err.Error())
+			http.Error(w, `{"reason": "Server error"}`, http.StatusInternalServerError)
 			Error500Handler(w, r)
 			return
 		}
@@ -93,7 +96,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 		token, err := db.CreateSession(username)
 		if err != nil {
-			log.Printf("LoginHandler: Error creating session: %s\n", err.Error())
+			http.Error(w, `{"reason": "Server error"}`, http.StatusInternalServerError)
 			Error500Handler(w, r)
 			return
 		}
@@ -123,17 +126,20 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 	postIDStr := r.URL.Path[len("posts/"):]
 	postID, err := strconv.Atoi(postIDStr)
 	if err != nil {
+		http.Error(w, `{reason: invalid post id}`, http.StatusBadRequest)
 		Error400Handler(w, r, "invalid post id")
 		return
 	}
 
 	post, err := db.GetPost(postID)
 	if err != nil {
+		http.Error(w, `{reason: post not found}`, http.StatusNotFound)
 		Error404Handler(w, r)
 		return
 	}
 	comments, err := db.GetComments(postID)
 	if err != nil {
+		http.Error(w, `{reason: invalid comment}`, http.StatusInternalServerError)
 		Error500Handler(w, r)
 		return
 	}

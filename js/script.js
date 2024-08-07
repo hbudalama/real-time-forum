@@ -59,6 +59,33 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+     document.getElementById("registerField").addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            const formData = new FormData(this);
+            const jsonObject = {};
+            formData.forEach((value, key) => jsonObject[key] = value);
+
+            fetch("/signup", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(jsonObject)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert("Registration successful!");
+                } else {
+                    alert("Registration failed: " + data.reason);
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+            });
+        });
+
     registerField.addEventListener('submit', (e) => {
         e.preventDefault();
         const username = registerField.querySelector('input[name="username"]').value;

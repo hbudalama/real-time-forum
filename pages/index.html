@@ -18,120 +18,42 @@
                 <img src="/static/images/logo.png" class="logo">
             </a>
             <div class="nav-right">
+                <div id="add-post-btn">
+                    <i class="fa-solid fa-circle-plus fa-xl" style="color: #aaaaaa;"></i>
+                </div>
                 <div class="dropdown">
-                    {{if .LoggedInUser }}
                     <div class="online"></div>
-                    {{end}}
                     <div class="user-icon">
                         <img src="/static/images/user.png" class="profile-image">
                     </div>
                     <div class="dropdown-options">
-                        {{if .LoggedInUser}}
                         <button id="logoutBtn" onclick="logoutHandler(event)">Logout</button>
-                        {{else}}
                         <a href="/login">Register/Login</a>
-                        {{end}}
                     </div>
                 </div>
             </div>
         </nav>
-        <div class="container">
+        <div id="main-container">
             <!-- left sidebar: users chats -->
             <div class="left-sidebar">
                 <div class="users-list">
-                    {{range .Users}}
                     <div class="user-list-profile">
                         <img src="/static/images/user.png" class="user-icon">
-                        <p class="username">{{.Username}}</p>
+                        <div id="username"> <p>Zainab</p></div>
                     </div>
-                    {{end}}
                 </div>
              </div>
+            
             <!-- Main content -->
-            <div class="main-content">
-                {{if .LoggedInUser}}
-                <div class="post-container">
-                    <div class="user-profile-post">
-                        <img src="/static/images/user.png">
-                        <div>
-                            <p>{{ .LoggedInUser.Username }}</p>
-                        </div>
-                    </div>
-                    {{if .ErrorMessage}}
-                    <div class="error-message">{{.ErrorMessage}}</div>
-                    {{end}}
-                    <form action="/add-post" method="POST" onsubmit="return validateForm()">
-                        <textarea name="title" rows="3" placeholder="What's on your mind?"></textarea>
-                        <textarea name="content" rows="3" placeholder="Content..."></textarea>
-                        <p>Choose a category:</p>
-                        <ul>
-                            <li>
-                                <input type="checkbox" id="post-education" name="post-category" value="education">
-                                <label for="post-education">Education</label>
-                            </li>
-                            <li>
-                                <input type="checkbox" id="post-entertainment" name="post-category" value="entertainment">
-                                <label for="post-entertainment">Entertainment</label>
-                            </li>
-                            <li>
-                                <input type="checkbox" id="post-sports" name="post-category" value="sports">
-                                <label for="post-sports">Sports</label>
-                            </li>
-                            <li>
-                                <input type="checkbox" id="post-news" name="post-category" value="news">
-                                <label for="post-news">News</label>
-                            </li>
-                        </ul>
-                        <div id="post-button-container">
-                            <button class="post-button" type="submit">Post</button>
-                        </div>
-                    </form>                    
-                </div>
-                {{end}}
-
-                {{range .Posts}}
-                <div class="post">
-                    <div class="post-row">
-                        <div class="user-profile">
-                            <img src="/static/images/user.png">
-                            <div>
-                                <p>{{.Username}}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <a href="/posts/{{.ID}}" class="post-title-link">
-                        <div>
-                            <h2>{{.Title}}</h2>
-                        </div>
-                    </a>
-                    <div class="post-row">
-                        <div class="activity-icons">
-                            <div>
-                                <a href="/api/posts/{{.ID}}/like">
-                                    <i class="fa fa-thumbs-up icon"></i>{{.Likes}}
-                                </a>
-                            </div>
-                            <div>
-                                <a href="/api/posts/{{.ID}}/dislike">
-                                    <i class="fa fa-thumbs-down icon"></i>{{.Dislikes}}
-                                </a>
-                            </div>
-                            <div>
-                                <a href="/posts/{{.ID}}">
-                                    <i class="fa fa-comment icon"></i>{{.Comments}}
-                                </a>
-                            </div>
-                        </div>
-                        <div class="post-profile-icon"></div>
-                    </div>
-                </div>
-                {{end}}
-                <footer class="footer"></footer>
+            <div id="main-content">
+                
             </div>
         </div>
     </div>
 </body>
 
-<script src="/static/index.js"></script>
+<!-- <script src="/js/index.js"></script> -->
+<script src="/js/chat.js"></script>
+<!-- <script src="/js/router.js"></script> -->
 
 </html>
