@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div id="login-div" style="display: none;">
+        I am a login form
+    </div>
+
+    <div id="content" style="display: none;">
+        i am some big content
+    </div>
+
+
+</body>
+
+<script defer>
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('Cheking login....')
+        fetch('http://localhost:2004/api/profile?token=okok')
+        .then(res => {
+            if (!res.ok) {
+                throw new Error("Something went wrong")
+            }
+            return res.json()
+        })
+        .then(userData => {
+            console.log(userData)
+            document.getElementById('login-div').style.display = 'none'
+            document.getElementById('content').style.display = 'block'
+        })
+        .catch(err => {
+            document.getElementById('login-div').style.display = 'block'
+            document.getElementById('content').style.display = 'none'
+
+            console.error(err)
+        })
+    })
+
+
+</script>
+
+</html>

@@ -23,7 +23,7 @@ func main() {
 
 	// Serve the single HTML file for all routes except API routes
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "index.html")
+		http.ServeFile(w, r, "pages/index.html")
 	})
 
 	// API handlers
