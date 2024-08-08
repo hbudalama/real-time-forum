@@ -7,7 +7,10 @@ document.addEventListener('DOMContentLoaded', () => {
     chatUser.addEventListener('click', () => {
         const picsrc = userpic.src;
         container.innerHTML = `<div id="chat-div">
-                <p><img src="${picsrc}" id="user-pic">${nickname}</p>
+            <div id="user-info-chat">
+                <img src="${picsrc}" id="user-pic">
+                <p id="user-name-chat">${nickname}</p>
+            </div>
              </div>`
     })
 });

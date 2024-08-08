@@ -46,7 +46,41 @@
             
             <!-- Main content -->
             <div id="main-content">
-                
+                <div class="post">
+                    <div class="post-row">
+                        <div class="user-profile">
+                            <img src="/static/images/user.png">
+                            <div>
+                                <p>User</p>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="/posts/{{.ID}}" class="post-title-link">
+                        <div>
+                            <h2>Post Title</h2>
+                        </div>
+                    </a>
+                    <div class="post-row">
+                        <div class="activity-icons">
+                            <div>
+                                <a href="/api/posts/{{.ID}}/like">
+                                    <i class="fa fa-thumbs-up icon"></i>{{.Likes}}
+                                </a>
+                            </div>
+                            <div>
+                                <a href="/api/posts/{{.ID}}/dislike">
+                                    <i class="fa fa-thumbs-down icon"></i>{{.Dislikes}}
+                                </a>
+                            </div>
+                            <div>
+                                <a href="/posts/{{.ID}}">
+                                    <i class="fa fa-comment icon"></i>{{.Comments}}
+                                </a>
+                            </div>
+                        </div>
+                        <div class="post-profile-icon"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -54,6 +88,7 @@
 
 <!-- <script src="/js/index.js"></script> -->
 <script src="/js/chat.js"></script>
+<script src="/js/posts.js"></script>
 <!-- <script src="/js/router.js"></script> -->
 
 </html>
