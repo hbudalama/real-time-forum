@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+function initializeChat() {
     const chatUser = document.querySelector('.users-list');
     const container = document.getElementById('main-content');
     const nickname = document.querySelector('#username p').textContent;
@@ -11,7 +11,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 <img src="${picsrc}" id="user-pic">
                 <p id="user-name-chat">${nickname}</p>
             </div>
-             </div>`
-    })
-});
-
+        </div>`;
+    });
+}

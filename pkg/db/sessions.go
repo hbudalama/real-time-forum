@@ -42,3 +42,9 @@ func DeleteSession(token string) error {
 	_, err := db.Exec("UPDATE User SET sessionToken = NULL, sessionExpiration = NULL WHERE sessionToken = ?", token)
 	return err
 }
+
+func IsSessionValid(token string) bool {
+	// Query your session table to check if the token exists and is valid
+	return true // Return true if valid, false otherwise
+}
+

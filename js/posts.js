@@ -1,8 +1,7 @@
-document.addEventListener('DOMContentLoaded', () => {
+function initializePosts() {
     const postBtn = document.getElementById('add-post-btn');
     const container = document.getElementById('main-content');
     const posts = document.querySelector('.post');
-
 
     postBtn.addEventListener('click', () => {
         posts.style.display = 'none';
@@ -42,6 +41,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             <button class="post-button" type="submit">Post</button>
                         </div>
                     </form>                    
-                </div> `
-    })
-});
+                </div> `;
+    });
+}

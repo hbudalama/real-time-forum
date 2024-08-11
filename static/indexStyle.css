@@ -485,3 +485,6 @@ button:hover {
     color: whitesmoke;
 }
 
+.hidden {
+    display: none;
+}

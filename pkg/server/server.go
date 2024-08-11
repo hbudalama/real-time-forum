@@ -16,6 +16,24 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+func CheckSessionHandler(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("session_token")
+	if err != nil || !db.IsSessionValid(cookie.Value) {
+		json.NewEncoder(w).Encode(map[string]bool{"isAuthenticated": false})
+		return
+	}
+	json.NewEncoder(w).Encode(map[string]bool{"isAuthenticated": true})
+}
+
+func GetAgesHandler(w http.ResponseWriter, r *http.Request) {
+	var ages []int
+	for i := 16; i <= 70; i++ {
+		ages = append(ages, i)
+	}
+	json.NewEncoder(w).Encode(map[string][]int{"ages": ages})
+}
+
+
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if !MethodsGuard(w, r, "GET", "POST") {
 		return
