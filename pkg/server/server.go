@@ -35,6 +35,7 @@ func GetAgesHandler(w http.ResponseWriter, r *http.Request) {
 
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("here")
 	if !MethodsGuard(w, r, "GET", "POST") {
 		return
 	}
