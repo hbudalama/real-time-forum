@@ -33,30 +33,35 @@ func GetAgesHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string][]int{"ages": ages})
 }
 
-
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("here")
 	if !MethodsGuard(w, r, "GET", "POST") {
 		return
 	}
 
 	if r.Method == "POST" {
-		var requestData struct {
-			UsernameOrEmail string `json:"username"`
-			Password        string `json:"password"`
-		}
-		if err := json.NewDecoder(r.Body).Decode(&requestData); err != nil {
-			http.Error(w, `{reason: cant decode body}`, http.StatusBadRequest)
-			Error400Handler(w, r, "can't decode body")
+		// var requestData struct {
+		// 	UsernameOrEmail string `json:"username"`
+		// 	Password        string `json:"password"`
+		// }
+		// if err := json.NewDecoder(r.Body).Decode(&requestData); err != nil {
+		// 	http.Error(w, `{reason: cant decode body}`, http.StatusBadRequest)
+		// 	Error400Handler(w, r, "can't decode body")
+		// 	return
+		// }
+
+		if err := r.ParseMultipartForm(1024); err != nil {
+			http.Error(w, `{"reason": "Can't parse form data"}`, http.StatusBadRequest)
+			Error400Handler(w, r, "Can't parse form data")
 			return
 		}
 
-		identifier := strings.TrimSpace(requestData.UsernameOrEmail)
-		password := strings.TrimSpace(requestData.Password)
+		identifier := strings.TrimSpace(r.Form.Get("username"))
+		password := strings.TrimSpace(r.Form.Get("password"))
+
 		fmt.Println(identifier)
 		if identifier == "" {
 			http.Error(w, `{reason: empty username}`, http.StatusBadRequest)
-			Error400Handler(w, r, "Emptry username")
+			Error400Handler(w, r, "Empty username")
 			return
 		}
 		if password == "" {
@@ -125,9 +130,10 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 			Expires:  time.Now().Add(24 * time.Hour),
 			HttpOnly: true,
 			Path:     "/",
+			Secure:   false,
 		})
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"message": "Login successful"}`))
+		w.Write([]byte(`{"isAuthenticated": true}`))
 		return
 	}
 
@@ -136,9 +142,11 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		Ages = append(Ages, i)
 	}
 
+	fmt.Println("i logged in")
 	data := structs.PageData{Ages: Ages}
-	tmpl := template.Must(template.ParseFiles(filepath.Join("pages", "login.html")))
+	tmpl := template.Must(template.ParseFiles(filepath.Join("pages", "index.html")))
 	tmpl.Execute(w, data)
+	fmt.Println("im in server")
 }
 
 func PostHandler(w http.ResponseWriter, r *http.Request) {
@@ -181,7 +189,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 		Comments:     comments,
 		LoggedInUser: user,
 	}
-	tmpl, err := template.ParseFiles("templates/posts.html")
+	tmpl, err := template.ParseFiles("templates/index.html")
 	if err != nil {
 		Error500Handler(w, r)
 		return
@@ -236,7 +244,7 @@ func GetPostHandler(w http.ResponseWriter, r *http.Request) {
 		LoggedInUser: user,
 	}
 
-	tmpl, err := template.ParseFiles(filepath.Join("pages", "posts.html"))
+	tmpl, err := template.ParseFiles(filepath.Join("pages", "index.html"))
 	if err != nil {
 		log.Printf("can't parse the template: %s\n", err.Error())
 		Error500Handler(w, r)
@@ -463,113 +471,80 @@ func AddPostsHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
+//	func LogoutHandler(w http.ResponseWriter, r *http.Request) {
+//		if !MethodsGuard(w, r, "DELETE") {
+//			http.Error(w, "only DELETE requests allowed", http.StatusMethodNotAllowed)
+//			return
+//		}
+//		if !LoginGuard(w, r) {
+//			http.Error(w, "You have to be logged in", http.StatusUnauthorized)
+//			return
+//		}
+//		cookie, err := r.Cookie("session_token")
+//		if err != nil {
+//			if err == http.ErrNoCookie {
+//				http.Error(w, "No session token found", http.StatusUnauthorized)
+//				return
+//			}
+//			log.Printf("can't get the cookie: %s\n", err.Error())
+//			Error500Handler(w, r)
+//			return
+//		}
+//		err = db.DeleteSession(cookie.Value)
+//		if err != nil {
+//			log.Printf("LogoutHandler: %s", err.Error())
+//			Error500Handler(w, r)
+//			return
+//		}
+//		// Clear the session cookie
+//		http.SetCookie(w, &http.Cookie{
+//			Name:     "session_token",
+//			Value:    "",
+//			Expires:  time.Unix(0, 0),
+//			HttpOnly: true,
+//			// MaxAge: -1,
+//			Path: "/",
+//		})
+//		w.WriteHeader(http.StatusOK)
+//	}
+
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {
-	if !MethodsGuard(w, r, "DELETE") {
-		http.Error(w, "only DELETE requests allowed", http.StatusMethodNotAllowed)
+	if !MethodsGuard(w, r, "GET") {
+		http.Error(w, "Only GET requests allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	if !LoginGuard(w, r) {
-		http.Error(w, "You have to be logged in", http.StatusUnauthorized)
-		return
-	}
+
+	// Attempt to get the session token from the cookie
 	cookie, err := r.Cookie("session_token")
-	if err != nil {
-		if err == http.ErrNoCookie {
-			http.Error(w, "No session token found", http.StatusUnauthorized)
+	if err == nil {
+		// Attempt to delete the session in the database
+		err = db.DeleteSession(cookie.Value)
+		if err != nil {
+			log.Printf("LogoutHandler: %s", err.Error())
+			Error500Handler(w, r)
 			return
 		}
+	} else if err != http.ErrNoCookie {
+		// If there's an error other than no cookie, log it
 		log.Printf("can't get the cookie: %s\n", err.Error())
 		Error500Handler(w, r)
 		return
 	}
-	err = db.DeleteSession(cookie.Value)
-	if err != nil {
-		log.Printf("LogoutHandler: %s", err.Error())
-		Error500Handler(w, r)
-		return
-	}
-	// Clear the session cookie
+
+	// Clear the session cookie regardless of whether it was found
 	http.SetCookie(w, &http.Cookie{
 		Name:     "session_token",
 		Value:    "",
 		Expires:  time.Unix(0, 0),
+		MaxAge:   -1,
 		HttpOnly: true,
-		// MaxAge: -1,
-		Path: "/",
+		Path:     "/",
 	})
-	w.WriteHeader(http.StatusOK)
-}
 
-func MyPostsHandler(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("session_token")
-	if err != nil {
-		http.Redirect(w, r, "/login", http.StatusFound)
-		return
-	}
-
-	token := cookie.Value
-	session, err := db.GetSession(token)
-	if err != nil {
-		http.Redirect(w, r, "/login", http.StatusFound)
-		return
-	}
-
-	user := session.User
-	posts, err := db.GetPostsByUser(user.Username)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	context := structs.HomeContext{
-		LoggedInUser: &user,
-		Posts:        posts,
-	}
-
-	tmpl := template.Must(template.ParseFiles("pages/myposts.html"))
-	tmpl.Execute(w, context)
-}
-
-func NewestPostsHandler(w http.ResponseWriter, r *http.Request) {
-	if !MethodsGuard(w, r, "GET") {
-		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	posts, err := db.GetNewestPosts()
-	if err != nil {
-		Error500Handler(w, r)
-		return
-	}
-
-	ctx := structs.HomeContext{
-		Posts: posts,
-	}
-
-	if LoginGuard(w, r) {
-		cookie, err := r.Cookie("session_token")
-		if err == nil {
-			token := cookie.Value
-			session, err := db.GetSession(token)
-			if err == nil {
-				ctx.LoggedInUser = &session.User
-			}
-		}
-	}
-
-	tmpl, err := template.ParseFiles(filepath.Join("pages", "index.html"))
-	if err != nil {
-		log.Printf("can't parse the template: %s\n", err.Error())
-		Error500Handler(w, r)
-		return
-	}
-
-	err = tmpl.Execute(w, ctx)
-	if err != nil {
-		log.Printf("can't execute the template: %s\n", err.Error())
-		Error500Handler(w, r)
-		return
-	}
+	fmt.Println("i logged out")
+	// w.Header().Set("Content-Type", "application/json")
+	// w.Write([]byte(`{"success": true, "message": "Logged out successfully"}`))
+	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
 
 func Error400Handler(w http.ResponseWriter, r *http.Request, reason string) {

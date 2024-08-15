@@ -2,13 +2,16 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"rtf/pkg/structs"
 	"time"
+
 	"github.com/google/uuid"
 )
 
 func CreateSession(username string) (string, error) {
+	fmt.Println("im in session")
 	token := uuid.New().String()
 	expiry := time.Now().Add(24 * time.Hour)
 	dbMutex.Lock()
