@@ -1,20 +1,31 @@
 body {
     height: 100vh;
-    /* background: linear-gradient(to bottom right, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('/static/images/background.jpg');
-    background-position: center;
-    background-size: cover; */
+    margin: 0;
     background: black;
     display: flex;
     justify-content: center;
     align-items: center;
 }
+
+#login-form-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* Take full height to center vertically */
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 10; /* Ensure it stays above other content */
+}
+
 #form {
     display: flex;
     flex-direction: column;
     width: 50%;
     max-width: 400px;
     align-items: center;
-    padding: 0;
+    padding: 20px;
     background-color: rgba(232, 231, 216, 0.803);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);

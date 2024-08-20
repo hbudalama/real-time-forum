@@ -25,38 +25,40 @@ function loadLoginForm() {
     document.querySelector('.left-sidebar').classList.add('hidden');
 
     const formHtml = `
-        <div id="form">
-            <div id="button-container">
-                <input type="radio" id="loginBtn" name="btn" value="login" checked>
-                <label for="loginBtn">Login</label>
-                <input type="radio" id="registerBtn" name="btn" value="register">
-                <label for="registerBtn">Register</label>
+        <div id="login-form-container">
+            <div id="form">
+                <div id="button-container">
+                    <input type="radio" id="loginBtn" name="btn" value="login" checked>
+                    <label for="loginBtn">Login</label>
+                    <input type="radio" id="registerBtn" name="btn" value="register">
+                    <label for="registerBtn">Register</label>
+                </div>
+                <form id="loginField" class="input-group" action="/api/login" method="post" onsubmit="handleLogin(event)">
+                    <div id="loginError" class="error-message"></div>
+                    <input type="text" class="input-field" placeholder="Username or Email" name="username" required>
+                    <input type="password" class="input-field" placeholder="Password" name="password" required>
+                    <button type="submit" class="submit-btn">Log in</button>
+                </form>
+                <form id="registerField" style="display: none;" class="input-group" action="/api/signup" method="post">
+                    <div id="registerError" class="error-message"></div>
+                    <input type="text" class="input-field" placeholder="Username" name="username" required>
+                    <input type="text" class="input-field" placeholder="First name" name="firstName" required>
+                    <input type="text" class="input-field" placeholder="Last name" name="lastName" required>
+                    <label for="gender"> select your gender:</label>
+                    <select class="gender" id="gender" name="gender">
+                        <option value="1">female</option>
+                        <option value="0">male</option>
+                    </select>
+                    <legend>select your age:</legend>
+                    <select class="selectAge" id="selectAge" name="age">
+                        <!-- Ages will be populated by server-side rendering -->
+                    </select>
+                    <input type="email" class="input-field" placeholder="Email" name="email" required>
+                    <input type="password" class="input-field" placeholder="Password" name="password" required>
+                    <input type="password" class="input-field" placeholder="Confirm Password" name="confirmPassword" required>
+                    <button type="submit" class="submit-btn">Register</button>
+                </form>
             </div>
-            <form id="loginField" class="input-group" action="/api/login" method="post" onsubmit="handleLogin(event)">
-                <div id="loginError" class="error-message"></div>
-                <input type="text" class="input-field" placeholder="Username or Email" name="username" required>
-                <input type="password" class="input-field" placeholder="Password" name="password" required>
-                <button type="submit" class="submit-btn">Log in</button>
-            </form>
-            <form id="registerField" style="display: none;" class="input-group" action="/api/signup" method="post">
-                <div id="registerError" class="error-message"></div>
-                <input type="text" class="input-field" placeholder="Username" name="username" required>
-                <input type="text" class="input-field" placeholder="First name" name="firstName" required>
-                <input type="text" class="input-field" placeholder="Last name" name="lastName" required>
-                <label for="gender"> select your gender:</label>
-                <select class="gender" id="gender" name="gender">
-                    <option value="1">female</option>
-                    <option value="0">male</option>
-                </select>
-                <legend>select your age:</legend>
-                <select class="selectAge" id="selectAge" name="age">
-                    <!-- Ages will be populated by server-side rendering -->
-                </select>
-                <input type="email" class="input-field" placeholder="Email" name="email" required>
-                <input type="password" class="input-field" placeholder="Password" name="password" required>
-                <input type="password" class="input-field" placeholder="Confirm Password" name="confirmPassword" required>
-                <button type="submit" class="submit-btn">Register</button>
-            </form>
         </div>
     `;
     document.getElementById('main-content').innerHTML = formHtml;
@@ -84,6 +86,7 @@ function loadLoginForm() {
         registerError.style.display = 'none';
     });
 }
+
 
 
 function loadForum() {
@@ -137,17 +140,6 @@ function handleLogin(event) {
     .catch(error => console.error('Error:', error));
 }
 
-// function logoutHandler(e) {
-//     fetch('/logout', {
-//         method: 'DELETE',
-//         headers: {
-//             'Content-Type': 'application/json',
-//         },
-//     })
-//         .then(response => {
-//             window.location.href = ('/api/login')
-//         })
-// }
 function logoutHandler() {
     fetch('/api/logout', {
         method: 'DELETE',

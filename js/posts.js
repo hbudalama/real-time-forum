@@ -14,7 +14,7 @@ function initializePosts() {
             <div class="post-container">
                 <div class="user-profile-post">
                     <img src="/static/images/user.png">
-                    <div>
+                    <div>   
                         <p>username</p>
                     </div>
                 </div>
