@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -15,18 +16,36 @@ func CommentsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 		return
 	}
-	if r.Method == http.MethodPost {
-		postIDStr := r.URL.Path[len("/api/posts/") : len(r.URL.Path)-len("/comments")]
-		postID, err := strconv.Atoi(postIDStr)
+
+	postIDStr := r.URL.Path[len("/api/posts/") : len(r.URL.Path)-len("/comments")]
+	postID, err := strconv.Atoi(postIDStr)
+	if err != nil {
+		http.Error(w, "Invalid post ID", http.StatusBadRequest)
+		return
+	}
+
+	if r.Method == http.MethodGet {
+		// Fetch comments for the given post ID
+		comments, err := db.GetComments(postID)
 		if err != nil {
-			http.Error(w, "Invalid post ID", http.StatusBadRequest)
+			http.Error(w, "Error fetching comments", http.StatusInternalServerError)
 			return
 		}
+		// Return comments as JSON
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(comments); err != nil {
+			http.Error(w, "Error encoding comments", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	if r.Method == http.MethodPost {
 		comment := r.FormValue("comment")
 		if strings.TrimSpace(comment) == "" {
 			http.Error(w, "Comment cannot be empty", http.StatusBadRequest)
 			return
 		}
+
 		cookie, err := r.Cookie("session_token")
 		if err != nil {
 			log.Printf("can't get the cookie: %s\n", err.Error())
@@ -47,6 +66,7 @@ func CommentsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, fmt.Sprintf("/posts/%d", postID), http.StatusSeeOther)
 	}
 }
+
 
 func AddLikesHandler(w http.ResponseWriter, r *http.Request) {
 	if !LoginGuard(w, r) {

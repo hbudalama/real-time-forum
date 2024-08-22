@@ -87,55 +87,66 @@ function loadLoginForm() {
     });
 }
 
-
-
 function loadForum() {
     // Show the navigation bar and left sidebar by removing the 'hidden' class
     document.querySelector('nav').classList.remove('hidden');
     document.querySelector('.left-sidebar').classList.remove('hidden');
 
-    const forumHtml = `
-        <div class="index">
+    fetch('/api/posts')
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Server error: ${response.status} ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(posts => {
+        console.log(posts); // Inspect the data structure here
+        const forumHtml = posts.map(post => `
             <div class="post">
-                    <div class="post-row">
-                        <div class="user-profile">
-                            <img src="/static/images/user.png">
-                            <div>
-                                <p>User</p>
-                            </div>
-                        </div>
-                    </div>
-                    <a href="javascript:void(0)" class="post-title-link" data-id="1">
+                <div class="post-row">
+                    <div class="user-profile">
+                        <img src="/static/images/user.png">
                         <div>
-                            <h2>Post Title</h2>
+                            <p>${post.Username}</p>
                         </div>
-                    </a>
-                    <div class="post-row">
-                        <div class="activity-icons">
-                            <div>
-                                <i class="fa fa-thumbs-up icon"></i>4
-                            </div>
-                            <div>
-                                <i class="fa fa-thumbs-down icon"></i>0
-                            </div>
-                            <div>
-                                <a href="javascript:void(0)" class="comment-icon" data-id="1">
-                                    <i class="fa fa-comment icon"></i>5
-                                </a>
-                            </div>
-                            
-                        </div>
-                        <div class="post-profile-icon"></div>
                     </div>
                 </div>
-        </div>
-    `;
-    document.getElementById('main-content').innerHTML = forumHtml;
-    // Reinitialize your forum JavaScript here
-    initializePosts();
-    initializeComments();
-    initializeChat();
+                <a href="javascript:void(0)" class="post-title-link" data-id="${post.ID}">
+                    <div>
+                        <h2>${post.Title}</h2>
+                    </div>
+                </a>
+                <div class="post-row">
+                    <div class="activity-icons">
+                        <div>
+                            <i class="fa fa-thumbs-up icon"></i>${post.Likes}
+                        </div>
+                        <div>
+                            <i class="fa fa-thumbs-down icon"></i>${post.Dislikes}
+                        </div>
+                        <div>
+                            <a href="javascript:void(0)" class="comment-icon" data-id="${post.ID}">
+                                <i class="fa fa-comment icon"></i>${post.Comments}
+                            </a>
+                        </div>
+                    </div>
+                    <div class="post-profile-icon"></div>
+                </div>
+            </div>
+        `).join('');
+
+        document.getElementById('main-content').innerHTML = `<div class="index">${forumHtml}</div>`;
+        // Reinitialize your forum JavaScript here
+        initializePosts();
+        initializeComments();
+        initializeChat();
+    })
+    .catch(error => {
+        console.error('There has been a problem with your fetch operation:', error);
+    });
+
 }
+
 
 function loadAges() {
     fetch('/api/get_ages')

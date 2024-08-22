@@ -4,10 +4,6 @@ function initializeComments() {
     const dialogOverlay = document.getElementById('dialog-overlay');
     const commentList = document.getElementById('comment-list');
 
-    const sampleComments = [
-        { Username: 'Alice', Content: 'Great post!', Likes: 10, Dislikes: 2, ID: 1, CreatedDate: new Date() },
-        { Username: 'Bob', Content: 'Thanks for sharing!', Likes: 5, Dislikes: 1, ID: 2, CreatedDate: new Date() },
-    ];
 
     const renderComments = (comments) => {
         const commentItems = comments.map(comment => `
@@ -34,10 +30,27 @@ function initializeComments() {
     };
 
     mainContent.addEventListener('click', (event) => {
-        if (event.target.closest('.post-title-link') || event.target.closest('.comment-icon')) {
-            renderComments(sampleComments);
-            dialog.classList.add('show');
-            dialogOverlay.classList.add('show');
+        const postLink = event.target.closest('.post-title-link');
+        const commentIcon = event.target.closest('.comment-icon');
+
+        if (postLink || commentIcon) {
+            const postId = postLink ? postLink.dataset.id : commentIcon.dataset.id;
+
+            fetch(`/api/posts/${postId}/comments`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Failed to fetch comments: ${response.status} ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(comments => {
+                    renderComments(comments);
+                    dialog.classList.add('show');
+                    dialogOverlay.classList.add('show');
+                })
+                .catch(error => {
+                    console.error('Error fetching comments:', error);
+                });
         }
     });
 

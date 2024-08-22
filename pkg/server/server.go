@@ -39,15 +39,6 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == "POST" {
-		// var requestData struct {
-		// 	UsernameOrEmail string `json:"username"`
-		// 	Password        string `json:"password"`
-		// }
-		// if err := json.NewDecoder(r.Body).Decode(&requestData); err != nil {
-		// 	http.Error(w, `{reason: cant decode body}`, http.StatusBadRequest)
-		// 	Error400Handler(w, r, "can't decode body")
-		// 	return
-		// }
 
 		if err := r.ParseMultipartForm(1024); err != nil {
 			http.Error(w, `{"reason": "Can't parse form data"}`, http.StatusBadRequest)
@@ -150,7 +141,25 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func PostHandler(w http.ResponseWriter, r *http.Request) {
-	postIDStr := r.URL.Path[len("posts/"):]
+	fmt.Println("i'm in post handler")
+	if r.Method == http.MethodGet && r.URL.Path == "/api/posts" {
+		// Get all posts from the database
+		posts := db.GetAllPosts()
+
+		// Set the response content type to JSON
+		w.Header().Set("Content-Type", "application/json")
+
+		// Encode the posts slice into JSON and write it to the response
+		err := json.NewEncoder(w).Encode(posts)
+		if err != nil {
+			http.Error(w, `{reason: error encoding posts}`, http.StatusInternalServerError)
+			return
+		}
+		return
+	}
+
+	// Existing code for handling individual posts by ID...
+	postIDStr := r.URL.Path[len("/api/posts/"):]
 	postID, err := strconv.Atoi(postIDStr)
 	if err != nil {
 		http.Error(w, `{reason: invalid post id}`, http.StatusBadRequest)
@@ -196,6 +205,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	tmpl.Execute(w, data)
 }
+
 
 func GetPostHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
