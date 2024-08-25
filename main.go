@@ -32,11 +32,11 @@ func main() {
 	// API handlers
 	mux.HandleFunc("/api/login", server.LoginHandler) //fetched
 	mux.HandleFunc("/api/posts", server.PostHandler) // fetched
-	mux.HandleFunc("/api/posts/{id}/comments", server.CommentsHandler) 
+	mux.HandleFunc("/api/posts/{id}/comments", server.CommentsHandler) //fetched
 	mux.HandleFunc("/api/posts/{id}", server.GetPostHandler) 
 	mux.HandleFunc("/api/posts/{id}/dislike", server.AddDislikesHandler)
 	mux.HandleFunc("/api/posts/{id}/like", server.AddLikesHandler)
-	mux.HandleFunc("/api/signup", server.SignupHandler)
+	mux.HandleFunc("/api/signup", server.SignupHandler) //fetched
 	mux.HandleFunc("/api/logout", server.LogoutHandler) //fetched
 	mux.HandleFunc("/api/comments/{id}/like", server.LikeCommentHandler)
 	mux.HandleFunc("/api/comments/{id}/dislike", server.DislikeCommentHandler)

@@ -3,7 +3,8 @@ function initializeComments() {
     const dialog = document.getElementById('comment-dialog');
     const dialogOverlay = document.getElementById('dialog-overlay');
     const commentList = document.getElementById('comment-list');
-
+    const postTitleElement = document.getElementById('post-title');
+    const postContentElement = document.getElementById('post-content');
 
     const renderComments = (comments) => {
         const commentItems = comments.map(comment => `
@@ -39,17 +40,24 @@ function initializeComments() {
             fetch(`/api/posts/${postId}/comments`)
                 .then(response => {
                     if (!response.ok) {
-                        throw new Error(`Failed to fetch comments: ${response.status} ${response.statusText}`);
+                        throw new Error(`Failed to fetch post details and comments: ${response.status} ${response.statusText}`);
                     }
                     return response.json();
                 })
-                .then(comments => {
-                    renderComments(comments);
+                .then(data => {
+                    // Update the post title and content in the dialog
+                    postTitleElement.textContent = data.post.Title;
+                    postContentElement.textContent = data.post.Content;
+
+                    // Render the comments
+                    renderComments(data.comments);
+
+                    // Show the dialog
                     dialog.classList.add('show');
                     dialogOverlay.classList.add('show');
                 })
                 .catch(error => {
-                    console.error('Error fetching comments:', error);
+                    console.error('Error fetching post details and comments:', error);
                 });
         }
     });

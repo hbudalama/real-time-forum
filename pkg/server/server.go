@@ -206,7 +206,6 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, data)
 }
 
-
 func GetPostHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -274,38 +273,28 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var requestData struct {
-		Username        string `json:"username"`
-		FirstName       string `json:"firstName"`
-		LastName        string `json:"lastName"`
-		Gender          string `json:"gender"`
-		Age             string `json:"age"`
-		Email           string `json:"email"`
-		Password        string `json:"password"`
-		ConfirmPassword string `json:"confirmPassword"`
-	}
-
-	if err := json.NewDecoder(r.Body).Decode(&requestData); err != nil {
-		http.Error(w, `{"reason": "Invalid request"}`, http.StatusBadRequest)
+	if err := r.ParseMultipartForm(1024); err != nil {
+		http.Error(w, `{"reason": "cant parse signup form"}`, http.StatusBadRequest)
+		Error400Handler(w, r, "Can't parse form data")
 		return
 	}
 
-	username := strings.TrimSpace(requestData.Username)
-	firstName := strings.TrimSpace(requestData.FirstName)
-	lastName := strings.TrimSpace(requestData.LastName)
-	email := strings.TrimSpace(requestData.Email)
-	password := strings.TrimSpace(requestData.Password)
-	confirmPassword := strings.TrimSpace(requestData.ConfirmPassword)
+	log.Println(r.Form)
 
-	var gender bool
-	if requestData.Gender == "1" {
-		gender = true
-	} else {
-		gender = false
-	}
+	username := strings.TrimSpace(r.Form.Get("username"))
+	firstName := strings.TrimSpace(r.Form.Get("firstName"))
+	lastName := strings.TrimSpace(r.Form.Get("lastName"))
+	email := strings.TrimSpace(r.Form.Get("email"))
+	password := strings.TrimSpace(r.Form.Get("password"))
+	confirmPassword := strings.TrimSpace(r.Form.Get("password"))
 
-	age, err := strconv.Atoi(requestData.Age)
+	gender := r.Form.Get("gender") == "1"
+	// true :=  1 == 1
+	// false:=0 == 1
+
+	age, err := strconv.Atoi(r.Form.Get("age"))
 	if err != nil {
+		log.Printf("Can't parse date for signup: %s\n", err)
 		http.Error(w, `{"reason": "Invalid age format"}`, http.StatusBadRequest)
 		return
 	}

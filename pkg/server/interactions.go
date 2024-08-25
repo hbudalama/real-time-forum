@@ -25,15 +25,32 @@ func CommentsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == http.MethodGet {
+		// Fetch post details
+		post, err := db.GetPost(postID)
+		if err != nil {
+			http.Error(w, "Error fetching post", http.StatusInternalServerError)
+			return
+		}
+
 		// Fetch comments for the given post ID
 		comments, err := db.GetComments(postID)
 		if err != nil {
 			http.Error(w, "Error fetching comments", http.StatusInternalServerError)
 			return
 		}
+
+		// Combine post details and comments in one response
+		data := struct {
+			Post     structs.Post      `json:"post"`
+			Comments []structs.Comment `json:"comments"`
+		}{
+			Post:     post,
+			Comments: comments,
+		}
+
 		// Return comments as JSON
 		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(comments); err != nil {
+		if err := json.NewEncoder(w).Encode(data); err != nil {
 			http.Error(w, "Error encoding comments", http.StatusInternalServerError)
 		}
 		return
@@ -45,7 +62,6 @@ func CommentsHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Comment cannot be empty", http.StatusBadRequest)
 			return
 		}
-
 		cookie, err := r.Cookie("session_token")
 		if err != nil {
 			log.Printf("can't get the cookie: %s\n", err.Error())
@@ -66,7 +82,6 @@ func CommentsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, fmt.Sprintf("/posts/%d", postID), http.StatusSeeOther)
 	}
 }
-
 
 func AddLikesHandler(w http.ResponseWriter, r *http.Request) {
 	if !LoginGuard(w, r) {

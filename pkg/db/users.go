@@ -11,34 +11,33 @@ import (
 )
 
 func AddUser(username string, firstName string, lastName string, gender bool, age int, email string, hashedPassword string) (*structs.User, error) {
-    // Insert user into the database
-    dbMutex.Lock()
-    defer dbMutex.Unlock()
+	// Insert user into the database
+	dbMutex.Lock()
+	defer dbMutex.Unlock()
 
-    genderInt := 0
-    if gender {
-        genderInt = 1
-    }
+	genderInt := 0
+	if gender {
+		genderInt = 1
+	}
 
-    _, err := db.Exec("INSERT INTO User (Username, firstName, lastName, gender, age, email, password) VALUES (?, ?, ?, ?, ?, ?, ?)", 
-        username, firstName, lastName, genderInt, age, email, hashedPassword)
-    if err != nil {
-        log.Printf("AddUser here: %s\n", err.Error())
-        sqliteErr, ok := err.(sqlite3.Error)
-        if ok && sqliteErr.ExtendedCode == sqlite3.ErrConstraintUnique {
-            if strings.Contains(sqliteErr.Error(), "Username") {
-                return nil, errors.New("username already exists")
-            } else if strings.Contains(sqliteErr.Error(), "email") {
-                return nil, errors.New("email already exists")
-            }
-        }
+	_, err := db.Exec("INSERT INTO User (Username, firstName, lastName, gender, age, email, password) VALUES (?, ?, ?, ?, ?, ?, ?)",
+		username, firstName, lastName, genderInt, age, email, hashedPassword)
+	if err != nil {
+		log.Printf("AddUser here: %s\n", err.Error())
+		sqliteErr, ok := err.(sqlite3.Error)
+		if ok && sqliteErr.ExtendedCode == sqlite3.ErrConstraintUnique {
+			if strings.Contains(sqliteErr.Error(), "Username") {
+				return nil, errors.New("username already exists")
+			} else if strings.Contains(sqliteErr.Error(), "email") {
+				return nil, errors.New("email already exists")
+			}
+		}
 
-        return &structs.User{}, errors.New("internal server error ??")
-    }
+		return &structs.User{}, errors.New("internal server error ??")
+	}
 
-    return nil, nil
+	return nil, nil
 }
-
 
 func GetUser(username string) (*structs.User, error) {
 	user := structs.User{}
@@ -55,22 +54,22 @@ func GetUser(username string) (*structs.User, error) {
 }
 
 func GetAllUsers() ([]structs.User, error) {
-    rows, err := db.Query("SELECT username, email, firstName, lastName, age, gender FROM user")
-    if err != nil {
-        log.Printf("error retreiving users %v", err)
-        return nil, err
-    }
-    defer rows.Close()
+	rows, err := db.Query("SELECT username, email, firstName, lastName, age, gender FROM user")
+	if err != nil {
+		log.Printf("error retreiving users %v", err)
+		return nil, err
+	}
+	defer rows.Close()
 
-    var users []structs.User
-    for rows.Next() {
-        var user structs.User
-        err := rows.Scan(&user.Username, &user.Email, &user.FirstName, &user.LastName, &user.Age, &user.Gender)
-        if err != nil {
-            log.Printf("error scanning user row %v", err)
-            continue
-        }
-        users = append(users, user)
-    }
-    return users, nil
+	var users []structs.User
+	for rows.Next() {
+		var user structs.User
+		err := rows.Scan(&user.Username, &user.Email, &user.FirstName, &user.LastName, &user.Age, &user.Gender)
+		if err != nil {
+			log.Printf("error scanning user row %v", err)
+			continue
+		}
+		users = append(users, user)
+	}
+	return users, nil
 }

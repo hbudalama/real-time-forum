@@ -39,7 +39,7 @@ function loadLoginForm() {
                     <input type="password" class="input-field" placeholder="Password" name="password" required>
                     <button type="submit" class="submit-btn">Log in</button>
                 </form>
-                <form id="registerField" style="display: none;" class="input-group" action="/api/signup" method="post">
+                <form id="registerField" style="display: none;" class="input-group" action="/api/signup" method="post" onsubmit="handleSignup(event)">
                     <div id="registerError" class="error-message"></div>
                     <input type="text" class="input-field" placeholder="Username" name="username" required>
                     <input type="text" class="input-field" placeholder="First name" name="firstName" required>
@@ -214,4 +214,30 @@ function validateForm() {
         return false;
     }
     return true;
+}
+
+function handleSignup(event) {
+    console.log("work u mf")
+    event.preventDefault();
+    const formData = new FormData(event.target);
+
+    fetch("/api/signup", {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+    })
+    .then(response => {
+        return response.json(); // Parse the JSON from the response
+    })
+    .then(data => {
+        if (data.success) {
+            alert("please log in.")
+        } else {
+            document.getElementById('registerField').innerText = data.reason || "Signup failed.";
+        }
+    })
+    .catch(error => {
+        document.getElementById('registerField').innerText = error.message || "An error occurred during signup.";
+        console.error('Error:', error);
+    });
 }
