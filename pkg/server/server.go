@@ -206,65 +206,173 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, data)
 }
 
+// func GetPostHandler(w http.ResponseWriter, r *http.Request) {
+// 	if r.Method != http.MethodGet {
+// 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+// 		return
+// 	}
+
+// 	postIDStr := r.URL.Path[len("/api/posts/"):]
+// 	postID, err := strconv.Atoi(postIDStr)
+// 	if err != nil {
+// 		http.Error(w, "Invalid post ID", http.StatusBadRequest)
+// 		return
+// 	}
+
+// 	post, err := db.GetPost(postID)
+// 	if err != nil {
+// 		Error404Handler(w, r)
+// 		return
+// 	}
+
+// 	comments, err := db.GetComments(postID)
+// 	if err != nil {
+// 		Error500Handler(w, r)
+// 		return
+// 	}
+
+// 	var user *structs.User
+// 	if LoginGuard(w, r) {
+// 		cookie, err := r.Cookie("session_token")
+// 		if err == nil {
+// 			token := cookie.Value
+// 			session, err := db.GetSession(token)
+// 			if err == nil {
+// 				user = &session.User
+// 			}
+// 		}
+// 	}
+
+// 	ctx := struct {
+// 		Post         structs.Post
+// 		Comments     []structs.Comment
+// 		LoggedInUser *structs.User
+// 	}{
+// 		Post:         post,
+// 		Comments:     comments,
+// 		LoggedInUser: user,
+// 	}
+
+// 	tmpl, err := template.ParseFiles(filepath.Join("pages", "index.html"))
+// 	if err != nil {
+// 		log.Printf("can't parse the template: %s\n", err.Error())
+// 		Error500Handler(w, r)
+// 		return
+// 	}
+
+// 	err = tmpl.Execute(w, ctx)
+// 	if err != nil {
+// 		log.Printf("can't execute the template: %s\n", err.Error())
+// 		Error500Handler(w, r)
+// 		return
+// 	}
+// }
+
 func GetPostHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
+	if r.Method == http.MethodGet {
+		// This part handles fetching and displaying a post by ID
+		postIDStr := r.URL.Path[len("/api/posts/"):]
+		postID, err := strconv.Atoi(postIDStr)
+		if err != nil {
+			http.Error(w, "Invalid post ID", http.StatusBadRequest)
+			return
+		}
 
-	postIDStr := r.URL.Path[len("/posts/"):]
-	postID, err := strconv.Atoi(postIDStr)
-	if err != nil {
-		http.Error(w, "Invalid post ID", http.StatusBadRequest)
-		return
-	}
+		post, err := db.GetPost(postID)
+		if err != nil {
+			Error404Handler(w, r)
+			return
+		}
 
-	post, err := db.GetPost(postID)
-	if err != nil {
-		Error404Handler(w, r)
-		return
-	}
+		comments, err := db.GetComments(postID)
+		if err != nil {
+			Error500Handler(w, r)
+			return
+		}
 
-	comments, err := db.GetComments(postID)
-	if err != nil {
-		Error500Handler(w, r)
-		return
-	}
-
-	var user *structs.User
-	if LoginGuard(w, r) {
-		cookie, err := r.Cookie("session_token")
-		if err == nil {
-			token := cookie.Value
-			session, err := db.GetSession(token)
+		var user *structs.User
+		if LoginGuard(w, r) {
+			cookie, err := r.Cookie("session_token")
 			if err == nil {
-				user = &session.User
+				token := cookie.Value
+				session, err := db.GetSession(token)
+				if err == nil {
+					user = &session.User
+				}
 			}
 		}
-	}
 
-	ctx := struct {
-		Post         structs.Post
-		Comments     []structs.Comment
-		LoggedInUser *structs.User
-	}{
-		Post:         post,
-		Comments:     comments,
-		LoggedInUser: user,
-	}
+		ctx := struct {
+			Post         structs.Post
+			Comments     []structs.Comment
+			LoggedInUser *structs.User
+		}{
+			Post:         post,
+			Comments:     comments,
+			LoggedInUser: user,
+		}
 
-	tmpl, err := template.ParseFiles(filepath.Join("pages", "index.html"))
-	if err != nil {
-		log.Printf("can't parse the template: %s\n", err.Error())
-		Error500Handler(w, r)
-		return
-	}
+		tmpl, err := template.ParseFiles(filepath.Join("pages", "index.html"))
+		if err != nil {
+			log.Printf("can't parse the template: %s\n", err.Error())
+			Error500Handler(w, r)
+			return
+		}
 
-	err = tmpl.Execute(w, ctx)
-	if err != nil {
-		log.Printf("can't execute the template: %s\n", err.Error())
-		Error500Handler(w, r)
-		return
+		err = tmpl.Execute(w, ctx)
+		if err != nil {
+			log.Printf("can't execute the template: %s\n", err.Error())
+			Error500Handler(w, r)
+			return
+		}
+	} else if r.Method == http.MethodPost {
+		// This part handles creating a new post
+		if !LoginGuard(w, r) {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		// Parse form values
+		title := r.FormValue("title")
+		content := r.FormValue("content")
+		categories := r.Form["post-category"]
+
+		if title == "" || content == "" {
+			http.Error(w, "Missing post title or content", http.StatusBadRequest)
+			return
+		}
+
+		// Retrieve the current user
+		cookie, err := r.Cookie("session_token")
+		if err != nil {
+			http.Error(w, "Failed to retrieve session token", http.StatusInternalServerError)
+			return
+		}
+		token := cookie.Value
+		session, err := db.GetSession(token)
+		if err != nil {
+			http.Error(w, "Invalid session", http.StatusUnauthorized)
+			return
+		}
+
+		// Use the existing CreatePost function
+		postID, err := db.CreatePost(title, content, session.User.Username)
+		if err != nil {
+			http.Error(w, "Failed to create post", http.StatusInternalServerError)
+			return
+		}
+
+		// Save post categories
+		err = db.AddPostCategories(postID, categories)
+		if err != nil {
+			http.Error(w, "Failed to save post categories", http.StatusInternalServerError)
+			return
+		}
+
+		// Redirect to the newly created post page or return a success response
+		http.Redirect(w, r, fmt.Sprintf("/api/posts/%d", postID), http.StatusSeeOther)
+	} else {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 }
 
@@ -419,7 +527,7 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 
 func AddPostsHandler(w http.ResponseWriter, r *http.Request) {
 	if !LoginGuard(w, r) {
-		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, "/api/login", http.StatusTemporaryRedirect)
 		return
 	}
 
@@ -628,4 +736,33 @@ func PostAPIHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json") // Set the response content type to JSON
 	json.NewEncoder(w).Encode(post)                    // Encode the post data as JSON and write it to the response
+}
+
+func GetUserInfoHandler(w http.ResponseWriter, r *http.Request) {
+    // Check if the user is logged in
+    cookie, err := r.Cookie("session_token")
+    if err != nil || cookie == nil {
+        http.Error(w, "Unauthorized", http.StatusUnauthorized)
+        return
+    }
+
+    // Retrieve session information from the database
+    session, err := db.GetSession(cookie.Value)
+    if err != nil {
+        http.Error(w, "Invalid session", http.StatusUnauthorized)
+        return
+    }
+
+    // Fetch the user info from the session
+    user := session.User
+
+    // Respond with the user information in JSON format
+    json.NewEncoder(w).Encode(map[string]interface{}{
+        "username": user.Username,
+        "email":    user.Email,
+        "firstName": user.FirstName,
+        "lastName":  user.LastName,
+        "age":      user.Age,
+        // Add any other fields you want to return
+    })
 }

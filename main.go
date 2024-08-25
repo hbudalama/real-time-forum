@@ -33,7 +33,8 @@ func main() {
 	mux.HandleFunc("/api/login", server.LoginHandler) //fetched
 	mux.HandleFunc("/api/posts", server.PostHandler) // fetched
 	mux.HandleFunc("/api/posts/{id}/comments", server.CommentsHandler) //fetched
-	mux.HandleFunc("/api/posts/{id}", server.GetPostHandler) 
+	mux.HandleFunc("/api/posts/{id}", server.GetPostHandler) // unused path but everything works til now
+	mux.HandleFunc("/api/add-post", server.AddPostsHandler) //fetched
 	mux.HandleFunc("/api/posts/{id}/dislike", server.AddDislikesHandler)
 	mux.HandleFunc("/api/posts/{id}/like", server.AddLikesHandler)
 	mux.HandleFunc("/api/signup", server.SignupHandler) //fetched
@@ -42,6 +43,7 @@ func main() {
 	mux.HandleFunc("/api/comments/{id}/dislike", server.DislikeCommentHandler)
 	mux.HandleFunc("/api/check_session", server.CheckSessionHandler) // fetched
 	mux.HandleFunc("/api/get_ages", server.GetAgesHandler) //fetched
+	mux.HandleFunc("/api/get_user_info", server.GetUserInfoHandler) //fetched
 
 	log.Println("Serving on http://localhost:8080")
 	err := http.ListenAndServe(":8080", mux)
