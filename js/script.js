@@ -118,10 +118,10 @@ function loadForum() {
                 </a>
                 <div class="post-row">
                     <div class="activity-icons">
-                        <div>
+                        <div class="like-button" data-id="${post.ID}">
                             <i class="fa fa-thumbs-up icon"></i>${post.Likes}
                         </div>
-                        <div>
+                        <div class="dislike-button" data-id="${post.ID}">
                             <i class="fa fa-thumbs-down icon"></i>${post.Dislikes}
                         </div>
                         <div>
@@ -140,6 +140,7 @@ function loadForum() {
         initializePosts();
         initializeComments();
         initializeChat();
+        initializeLikeDislikeButtons();
     })
     .catch(error => {
         console.error('There has been a problem with your fetch operation:', error);

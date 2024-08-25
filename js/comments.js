@@ -7,6 +7,11 @@ function initializeComments() {
     const postContentElement = document.getElementById('post-content');
 
     const renderComments = (comments) => {
+        if (!Array.isArray(comments) || comments.length === 0) {
+            commentList.innerHTML = '<p>No comments yet. Be the first to comment!</p>';
+            return;
+        }
+
         const commentItems = comments.map(comment => `
             <li>
                 <p><strong>${comment.Username}:</strong> ${comment.Content}</p>

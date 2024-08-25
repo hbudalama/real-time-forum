@@ -328,7 +328,7 @@ func GetPostHandler(w http.ResponseWriter, r *http.Request) {
 	} else if r.Method == http.MethodPost {
 		// This part handles creating a new post
 		if !LoginGuard(w, r) {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			http.Error(w, `{"reason": Unauthorized}`, http.StatusUnauthorized)
 			return
 		}
 
@@ -338,41 +338,46 @@ func GetPostHandler(w http.ResponseWriter, r *http.Request) {
 		categories := r.Form["post-category"]
 
 		if title == "" || content == "" {
-			http.Error(w, "Missing post title or content", http.StatusBadRequest)
+			http.Error(w, `{"reason:": Missing post title or content}`, http.StatusBadRequest)
+			Error400Handler(w, r, "Missing post title or content")
 			return
 		}
 
 		// Retrieve the current user
 		cookie, err := r.Cookie("session_token")
 		if err != nil {
-			http.Error(w, "Failed to retrieve session token", http.StatusInternalServerError)
+			http.Error(w, `{"reason": Failed to retrieve session token}`, http.StatusInternalServerError)
+			Error500Handler(w, r)
 			return
 		}
 		token := cookie.Value
 		session, err := db.GetSession(token)
 		if err != nil {
-			http.Error(w, "Invalid session", http.StatusUnauthorized)
+			http.Error(w, `{"reason": Invalid session}`, http.StatusUnauthorized)
 			return
 		}
 
 		// Use the existing CreatePost function
 		postID, err := db.CreatePost(title, content, session.User.Username)
 		if err != nil {
-			http.Error(w, "Failed to create post", http.StatusInternalServerError)
+			http.Error(w, `{"reason": Failed to create post"}`, http.StatusInternalServerError)
+			Error500Handler(w, r)
 			return
 		}
 
 		// Save post categories
 		err = db.AddPostCategories(postID, categories)
 		if err != nil {
-			http.Error(w, "Failed to save post categories", http.StatusInternalServerError)
+			http.Error(w, `{"reason": Failed to save post categories}`, http.StatusInternalServerError)
+			Error500Handler(w, r)
 			return
 		}
 
 		// Redirect to the newly created post page or return a success response
 		http.Redirect(w, r, fmt.Sprintf("/api/posts/%d", postID), http.StatusSeeOther)
 	} else {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		http.Error(w, `{"reason": Method not allowed}`, http.StatusMethodNotAllowed)
+		Error404Handler(w, r)
 	}
 }
 
@@ -526,6 +531,7 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func AddPostsHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	if !LoginGuard(w, r) {
 		http.Redirect(w, r, "/api/login", http.StatusTemporaryRedirect)
 		return
@@ -545,7 +551,7 @@ func AddPostsHandler(w http.ResponseWriter, r *http.Request) {
 	var user structs.User
 	cookie, err := r.Cookie("session_token")
 	if err != nil {
-		log.Printf("can't get the cookie: %s\n", err.Error())
+		http.Error(w, `{"reason": can't get the cookie}`, http.StatusBadRequest)
 		return
 	}
 
@@ -553,29 +559,29 @@ func AddPostsHandler(w http.ResponseWriter, r *http.Request) {
 
 	session, err := db.GetSession(token)
 	if err != nil {
-		log.Printf("can't get the session: %s\n", err.Error())
+		http.Error(w, `{"reason": can't get the session}`, http.StatusBadRequest)
 		return
 	}
 	user = session.User
 
 	postID, err := db.CreatePost(title, content, user.Username)
 	if err != nil {
-		log.Printf("failed to create post: %s\n", err.Error())
+		http.Error(w, `{"reason": failed to create post}`, http.StatusInternalServerError)
 		Error500Handler(w, r)
 		return
 	}
-
-	log.Printf("Created post with ID: %d\n", postID) // Debug print
 
 	// Save the categories for the post
 	err = db.AddPostCategories(postID, categories)
 	if err != nil {
-		log.Printf("failed to add categories to post: %s\n", err.Error())
+		http.Error(w, `{"reason": failed to add categories to post}`, http.StatusInternalServerError)
 		Error500Handler(w, r)
 		return
 	}
 
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	// http.Redirect(w, r, "/", http.StatusSeeOther)
+	w.WriteHeader(http.StatusOK)
+    json.NewEncoder(w).Encode(map[string]int{"postID": postID})
 }
 
 //	func LogoutHandler(w http.ResponseWriter, r *http.Request) {
@@ -739,30 +745,30 @@ func PostAPIHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetUserInfoHandler(w http.ResponseWriter, r *http.Request) {
-    // Check if the user is logged in
-    cookie, err := r.Cookie("session_token")
-    if err != nil || cookie == nil {
-        http.Error(w, "Unauthorized", http.StatusUnauthorized)
-        return
-    }
+	// Check if the user is logged in
+	cookie, err := r.Cookie("session_token")
+	if err != nil || cookie == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
-    // Retrieve session information from the database
-    session, err := db.GetSession(cookie.Value)
-    if err != nil {
-        http.Error(w, "Invalid session", http.StatusUnauthorized)
-        return
-    }
+	// Retrieve session information from the database
+	session, err := db.GetSession(cookie.Value)
+	if err != nil {
+		http.Error(w, "Invalid session", http.StatusUnauthorized)
+		return
+	}
 
-    // Fetch the user info from the session
-    user := session.User
+	// Fetch the user info from the session
+	user := session.User
 
-    // Respond with the user information in JSON format
-    json.NewEncoder(w).Encode(map[string]interface{}{
-        "username": user.Username,
-        "email":    user.Email,
-        "firstName": user.FirstName,
-        "lastName":  user.LastName,
-        "age":      user.Age,
-        // Add any other fields you want to return
-    })
+	// Respond with the user information in JSON format
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"username":  user.Username,
+		"email":     user.Email,
+		"firstName": user.FirstName,
+		"lastName":  user.LastName,
+		"age":       user.Age,
+		// Add any other fields you want to return
+	})
 }

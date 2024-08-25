@@ -1,13 +1,13 @@
 function initializePosts() {
     const postBtn = document.getElementById('add-post-btn');
     const container = document.getElementById('main-content');
-    const posts = document.querySelector('.post');
 
     postBtn.addEventListener('click', () => {
-        if (posts) {
-            posts.style.display = 'none';
-        } else {
-            console.error('No posts element found.');
+        // Check if the post creation form is already visible
+        const existingForm = document.getElementById('create-post-form');
+        if (existingForm) {
+            console.log('Post creation form is already visible.');
+            return; // Exit if form is already visible
         }
 
         // Fetch the logged-in username
@@ -65,8 +65,11 @@ function initializePosts() {
                         .then(data => {
                             if (data.success) {
                                 alert('Post created successfully!');
-                                // Reload posts or update the post list dynamically
-                                loadPosts();
+                                console.log("i have created a post!")
+                                // Hide the form and reload posts
+                                container.innerHTML = '';
+                                loadPosts(); // Load and display posts dynamically
+
                             } else {
                                 alert('Failed to create post.');
                             }
@@ -83,7 +86,27 @@ function loadPosts() {
     fetch('/api/post')
         .then(response => response.json())
         .then(data => {
-            // Code to dynamically display posts
+            const postsContainer = document.getElementById('posts-container');
+            if (!postsContainer) {
+                console.error('Posts container element not found.');
+                return;
+            }
+            postsContainer.innerHTML = ''; // Clear existing posts
+            data.posts.forEach(post => {
+                postsContainer.innerHTML += `
+                    <div class="post">
+                        <div class="user-profile-post">
+                            <img src="/static/images/user.png">
+                            <div>   
+                                <p>${post.username}</p>
+                            </div>
+                        </div>
+                        <h3>${post.title}</h3>
+                        <p>${post.content}</p>
+                        <p>Category: ${post.category}</p>
+                    </div>
+                `;
+            });
         })
         .catch(error => console.error('Error fetching posts:', error));
 }

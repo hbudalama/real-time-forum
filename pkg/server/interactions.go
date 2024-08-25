@@ -84,6 +84,8 @@ func CommentsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func AddLikesHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("i'm in like")
+
 	if !LoginGuard(w, r) {
 		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 		return
@@ -93,7 +95,6 @@ func AddLikesHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("postIDStr: %s\n", postIDStr)
 	postID, err := strconv.Atoi(postIDStr)
 	if err != nil {
-		//http.Error(w, "Invalid post ID", http.StatusBadRequest)
 		Error400Handler(w, r, "invalid post ID")
 		return
 	}
@@ -101,14 +102,15 @@ func AddLikesHandler(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("session_token")
 	if err != nil {
 		log.Printf("can't get the cookie: %s\n", err.Error())
+		Error500Handler(w, r)
 		return
 	}
 
 	token := cookie.Value
-
 	session, err := db.GetSession(token)
 	if err != nil {
 		log.Printf("can't get the session: %s\n", err.Error())
+		Error500Handler(w, r)
 		return
 	}
 	username := session.User.Username
@@ -119,10 +121,26 @@ func AddLikesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	// Get the updated like count after the operation
+	likes, dislikes, err := db.GetPostInteractions(postID)
+	if err != nil {
+		Error500Handler(w, r)
+		return
+	}
+
+	// Respond with JSON
+	w.Header().Set("Content-Type", "application/json")
+	response := map[string]interface{}{
+		"success":  true,
+		"likes":    likes,
+		"dislikes": dislikes,
+	}
+	json.NewEncoder(w).Encode(response)
 }
 
 func AddDislikesHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("i'm in dislike")
+
 	if !LoginGuard(w, r) {
 		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 		return
@@ -132,21 +150,22 @@ func AddDislikesHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("postIDStr: %s\n", postIDStr)
 	postID, err := strconv.Atoi(postIDStr)
 	if err != nil {
-		http.Error(w, "Invalid post ID", http.StatusBadRequest)
+		Error400Handler(w, r, "invalid post ID")
 		return
 	}
 
 	cookie, err := r.Cookie("session_token")
 	if err != nil {
 		log.Printf("can't get the cookie: %s\n", err.Error())
+		Error500Handler(w, r)
 		return
 	}
 
 	token := cookie.Value
-
 	session, err := db.GetSession(token)
 	if err != nil {
 		log.Printf("can't get the session: %s\n", err.Error())
+		Error500Handler(w, r)
 		return
 	}
 	username := session.User.Username
@@ -157,7 +176,21 @@ func AddDislikesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	// Get the updated dislike count after the operation
+	likes, dislikes, err := db.GetPostInteractions(postID)
+	if err != nil {
+		Error500Handler(w, r)
+		return
+	}
+
+	// Respond with JSON
+	w.Header().Set("Content-Type", "application/json")
+	response := map[string]interface{}{
+		"success":  true,
+		"likes":    likes,
+		"dislikes": dislikes,
+	}
+	json.NewEncoder(w).Encode(response)
 }
 
 func LikeCommentHandler(w http.ResponseWriter, r *http.Request) {
