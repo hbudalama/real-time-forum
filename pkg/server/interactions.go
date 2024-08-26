@@ -229,7 +229,20 @@ func LikeCommentHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, r.Referer(), http.StatusFound)
+	// http.Redirect(w, r, r.Referer(), http.StatusFound)
+	likes, dislikes, err := db.GetCommentInteractions(commentID)
+    if err != nil {
+        http.Error(w, "Unable to retrieve comment interactions", http.StatusInternalServerError)
+        return
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+    response := map[string]interface{}{
+        "success":  true,
+        "likes":    likes,
+        "dislikes": dislikes,
+    }
+    json.NewEncoder(w).Encode(response)
 }
 
 func DislikeCommentHandler(w http.ResponseWriter, r *http.Request) {
@@ -268,5 +281,18 @@ func DislikeCommentHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, r.Referer(), http.StatusFound)
+	// http.Redirect(w, r, r.Referer(), http.StatusFound)
+	likes, dislikes, err := db.GetCommentInteractions(commentID)
+    if err != nil {
+        http.Error(w, "Unable to retrieve comment interactions", http.StatusInternalServerError)
+        return
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+    response := map[string]interface{}{
+        "success":  true,
+        "likes":    likes,
+        "dislikes": dislikes,
+    }
+    json.NewEncoder(w).Encode(response)
 }

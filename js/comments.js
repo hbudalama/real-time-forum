@@ -11,29 +11,99 @@ function initializeComments() {
             commentList.innerHTML = '<p>No comments yet. Be the first to comment!</p>';
             return;
         }
-
+    
         const commentItems = comments.map(comment => `
             <li>
                 <p><strong>${comment.Username}:</strong> ${comment.Content}</p>
                 <p>${new Date(comment.CreatedDate).toLocaleString()}</p>
                 <div class="post-row">
                     <div class="activity-icons">
-                        <div>
-                            <a href="/api/comments/${comment.ID}/like">
-                                <i class="fa fa-thumbs-up icon"></i>${comment.Likes}
-                            </a>
+                        <div class="comment-like-button" data-id="${comment.ID}">
+                            <i class="fa fa-thumbs-up icon"></i>${comment.Likes}
                         </div>
-                        <div>
-                            <a href="/api/comments/${comment.ID}/dislike">
-                                <i class="fa fa-thumbs-down icon"></i>${comment.Dislikes}
-                            </a>
+                        <div class="comment-dislike-button" data-id="${comment.ID}">
+                            <i class="fa fa-thumbs-down icon"></i>${comment.Dislikes}
                         </div>
                     </div>
                 </div>
             </li>
         `).join('');
         commentList.innerHTML = commentItems;
+    
+        // Initialize the like and dislike buttons for comments
+        initializeCommentLikeDislikeButtons();
     };
+    
+
+    const initializeCommentLikeDislikeButtons = () => {
+        document.querySelectorAll('.comment-like-button').forEach(button => {
+            button.addEventListener('click', (event) => {
+                event.preventDefault(); // Prevent the default action
+                const commentId = button.getAttribute('data-id');
+    
+                fetch(`/api/comments/${commentId}/like`, {
+                    method: 'POST',
+                    credentials: 'include'
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            console.error('Server error:', text);
+                            throw new Error(`Server error: ${response.status} ${response.statusText}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        // Update both like and dislike counts
+                        button.innerHTML = `<i class="fa fa-thumbs-up icon"></i>${data.likes}`;
+                        const dislikeButton = button.closest('.post-row').querySelector('.comment-dislike-button');
+                        if (dislikeButton) {
+                            dislikeButton.innerHTML = `<i class="fa fa-thumbs-down icon"></i>${data.dislikes}`;
+                        }
+                    } else {
+                        console.error('Error:', data.message);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            });
+        });
+    
+        document.querySelectorAll('.comment-dislike-button').forEach(button => {
+            button.addEventListener('click', (event) => {
+                event.preventDefault(); // Prevent the default action
+                const commentId = button.getAttribute('data-id');
+    
+                fetch(`/api/comments/${commentId}/dislike`, {
+                    method: 'POST',
+                    credentials: 'include'
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            console.error('Server error:', text);
+                            throw new Error(`Server error: ${response.status} ${response.statusText}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        // Update both dislike and like counts
+                        button.innerHTML = `<i class="fa fa-thumbs-down icon"></i>${data.dislikes}`;
+                        const likeButton = button.closest('.post-row').querySelector('.comment-like-button');
+                        if (likeButton) {
+                            likeButton.innerHTML = `<i class="fa fa-thumbs-up icon"></i>${data.likes}`;
+                        }
+                    } else {
+                        console.error('Error:', data.message);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            });
+        });
+    };    
 
     mainContent.addEventListener('click', (event) => {
         const postLink = event.target.closest('.post-title-link');
