@@ -18,7 +18,10 @@ function initializeLikeDislikeButtons() {
             })
             .then(data => {
                 if (data.success) {
-                    button.innerHTML = `<i class="fa fa-thumbs-up icon"></i>${data.likes}`;
+                    button.innerHTML = `<i class="fa fa-thumbs-up icon liked"></i>${data.likes}`;
+                    button.querySelector('.icon').classList.add('liked');
+                    button.closest('.post-row').querySelector('.dislike-button .icon').classList.remove('disliked');
+                    button.closest('.post-row').querySelector('.dislike-button').innerHTML = `<i class="fa fa-thumbs-down icon"></i>${data.dislikes}`;
                 } else {
                     console.error('Error:', data.message);
                 }
@@ -46,7 +49,10 @@ function initializeLikeDislikeButtons() {
             })
             .then(data => {
                 if (data.success) {
-                    button.innerHTML = `<i class="fa fa-thumbs-down icon"></i>${data.dislikes}`;
+                    button.innerHTML = `<i class="fa fa-thumbs-down icon disliked"></i>${data.dislikes}`;
+                    button.querySelector('.icon').classList.add('disliked');
+                    button.closest('.post-row').querySelector('.like-button .icon').classList.remove('liked');
+                    button.closest('.post-row').querySelector('.like-button').innerHTML = `<i class="fa fa-thumbs-up icon"></i>${data.likes}`;
                 } else {
                     console.error('Error:', data.message);
                 }

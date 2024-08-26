@@ -235,6 +235,14 @@ textarea {
     color: rgba(232, 231, 216, 0.803);
 }
 
+.icon.liked {
+    color: rgba(61, 114, 61, 0.808); /* Green color for like */
+}
+
+.icon.disliked {
+    color: rgba(116, 43, 43, 0.808); /* Red color for dislike */
+}
+
 .fa-thumbs-up:active {
     color: rgba(61, 114, 61, 0.808);
 }
