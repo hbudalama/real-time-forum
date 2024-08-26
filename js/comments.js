@@ -5,65 +5,62 @@ function initializeComments() {
     const commentList = document.getElementById('comment-list');
     const postTitleElement = document.getElementById('post-title');
     const postContentElement = document.getElementById('post-content');
+    const commentTextarea = document.querySelector('#comment-dialog textarea[name="comment-area"]');
+    const addCommentButton = document.getElementById('add-comment-button');
+    const commentsCountElement = document.getElementById('comments-count'); // Assuming this element exists
 
     const renderComments = (comments) => {
         if (!Array.isArray(comments) || comments.length === 0) {
             commentList.innerHTML = '<p>No comments yet. Be the first to comment!</p>';
-            return;
-        }
-    
-        const commentItems = comments.map(comment => `
-            <li>
-                <p><strong>${comment.Username}:</strong> ${comment.Content}</p>
-                <p>${new Date(comment.CreatedDate).toLocaleString()}</p>
-                <div class="post-row">
-                    <div class="activity-icons">
-                        <div class="comment-like-button" data-id="${comment.ID}">
-                            <i class="fa fa-thumbs-up icon"></i>${comment.Likes}
-                        </div>
-                        <div class="comment-dislike-button" data-id="${comment.ID}">
-                            <i class="fa fa-thumbs-down icon"></i>${comment.Dislikes}
+        } else {
+            const commentItems = comments.map(comment => `
+                <li>
+                    <p><strong>${comment.Username}:</strong> ${comment.Content}</p>
+                    <p>${new Date(comment.CreatedDate).toLocaleString()}</p>
+                    <div class="post-row">
+                        <div class="activity-icons">
+                            <div class="comment-like-button" data-id="${comment.ID}">
+                                <i class="fa fa-thumbs-up icon"></i>${comment.Likes}
+                            </div>
+                            <div class="comment-dislike-button" data-id="${comment.ID}">
+                                <i class="fa fa-thumbs-down icon"></i>${comment.Dislikes}
+                            </div>
                         </div>
                     </div>
-                </div>
-            </li>
-        `).join('');
-        commentList.innerHTML = commentItems;
+                </li>
+            `).join('');
+            commentList.innerHTML = commentItems;
+        }
+    
+        // Update comments count
+        if (commentsCountElement) {
+            commentsCountElement.textContent = `Comments (${comments.length})`;
+        }
     
         // Initialize the like and dislike buttons for comments
         initializeCommentLikeDislikeButtons();
     };
-    
 
     const initializeCommentLikeDislikeButtons = () => {
         document.querySelectorAll('.comment-like-button').forEach(button => {
             button.addEventListener('click', (event) => {
-                event.preventDefault(); // Prevent the default action
+                event.preventDefault();
                 const commentId = button.getAttribute('data-id');
     
                 fetch(`/api/comments/${commentId}/like`, {
                     method: 'POST',
                     credentials: 'include'
                 })
-                .then(response => {
-                    if (!response.ok) {
-                        return response.text().then(text => {
-                            console.error('Server error:', text);
-                            throw new Error(`Server error: ${response.status} ${response.statusText}`);
-                        });
-                    }
-                    return response.json();
-                })
+                .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // Update both like and dislike counts
                         button.innerHTML = `<i class="fa fa-thumbs-up icon"></i>${data.likes}`;
                         const dislikeButton = button.closest('.post-row').querySelector('.comment-dislike-button');
                         if (dislikeButton) {
                             dislikeButton.innerHTML = `<i class="fa fa-thumbs-down icon"></i>${data.dislikes}`;
                         }
                     } else {
-                        console.error('Error:', data.message);
+                        console.error('Error:', data.reason);
                     }
                 })
                 .catch(error => console.error('Error:', error));
@@ -72,38 +69,62 @@ function initializeComments() {
     
         document.querySelectorAll('.comment-dislike-button').forEach(button => {
             button.addEventListener('click', (event) => {
-                event.preventDefault(); // Prevent the default action
+                event.preventDefault();
                 const commentId = button.getAttribute('data-id');
     
                 fetch(`/api/comments/${commentId}/dislike`, {
                     method: 'POST',
                     credentials: 'include'
                 })
-                .then(response => {
-                    if (!response.ok) {
-                        return response.text().then(text => {
-                            console.error('Server error:', text);
-                            throw new Error(`Server error: ${response.status} ${response.statusText}`);
-                        });
-                    }
-                    return response.json();
-                })
+                .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // Update both dislike and like counts
                         button.innerHTML = `<i class="fa fa-thumbs-down icon"></i>${data.dislikes}`;
                         const likeButton = button.closest('.post-row').querySelector('.comment-like-button');
                         if (likeButton) {
                             likeButton.innerHTML = `<i class="fa fa-thumbs-up icon"></i>${data.likes}`;
                         }
                     } else {
-                        console.error('Error:', data.message);
+                        console.error('Error:', data.reason);
                     }
                 })
                 .catch(error => console.error('Error:', error));
             });
         });
-    };    
+    };
+
+    const addComment = () => {
+        const comment = commentTextarea.value.trim();
+        if (comment === '') {
+            alert('Comment cannot be empty');
+            return;
+        }
+        const postId = dialog.dataset.postId; // Assuming postId is set as a data attribute on the dialog
+        
+        fetch(`/api/posts/${postId}/comments`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: new URLSearchParams({
+                comment: comment
+            }),
+            credentials: 'include'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Add the new comment to the list
+                renderComments(data.comments);
+                commentTextarea.value = ''; // Clear the textarea
+            } else {
+                console.error('Error:', data.message);
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    };
+
+    addCommentButton.addEventListener('click', addComment);
 
     mainContent.addEventListener('click', (event) => {
         const postLink = event.target.closest('.post-title-link');
@@ -113,27 +134,19 @@ function initializeComments() {
             const postId = postLink ? postLink.dataset.id : commentIcon.dataset.id;
 
             fetch(`/api/posts/${postId}/comments`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`Failed to fetch post details and comments: ${response.status} ${response.statusText}`);
-                    }
-                    return response.json();
-                })
+                .then(response => response.json())
                 .then(data => {
-                    // Update the post title and content in the dialog
                     postTitleElement.textContent = data.post.Title;
                     postContentElement.textContent = data.post.Content;
-
-                    // Render the comments
                     renderComments(data.comments);
 
-                    // Show the dialog
+                    // Set postId as a data attribute on the dialog
+                    dialog.dataset.postId = postId;
+
                     dialog.classList.add('show');
                     dialogOverlay.classList.add('show');
                 })
-                .catch(error => {
-                    console.error('Error fetching post details and comments:', error);
-                });
+                .catch(error => console.error('Error fetching post details and comments:', error));
         }
     });
 
