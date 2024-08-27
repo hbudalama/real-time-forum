@@ -101,16 +101,37 @@ function loadPosts() {
             data.forEach(post => {
                 container.innerHTML += `
                     <div class="post">
-                        <div class="user-profile-post">
-                            <img src="/static/images/user.png">
-                            <div>   
-                                <p>${post.username}</p>
-                            </div>
+                       <div class="user-profile">
+                        <img src="/static/images/user.png">
+                        <div>
+                            <p>${post.Username}</p>
                         </div>
-                        <h3>${post.title}</h3>
-                        <p>${post.content}</p>
-                        <p>Category: ${post.category}</p>
                     </div>
+                </div>
+                <a href="javascript:void(0)" class="post-title-link" data-id="${post.ID}">
+                    <div>
+                        <h2>${post.Title}</h2>
+                          <p>Category: ${post.Category}</p>
+                    </div>
+                </a>
+                <div class="post-row">
+                    <div class="activity-icons">
+                        <div class="like-button" data-id="${post.ID}">
+                            <i class="fa fa-thumbs-up icon"></i>${post.Likes}
+                        </div>
+                        <div class="dislike-button" data-id="${post.ID}">
+                            <i class="fa fa-thumbs-down icon"></i>${post.Dislikes}
+                        </div>
+                        <div>
+                            <a href="javascript:void(0)" class="comment-icon" data-id="${post.ID}">
+                                <i class="fa fa-comment icon"></i>
+                                <span id="post-${post.ID}-comments-count">${post.Comments}</span>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="post-profile-icon"></div>
+                </div>
+            </div>
                 `;
             });
         })
