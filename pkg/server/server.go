@@ -581,7 +581,7 @@ func AddPostsHandler(w http.ResponseWriter, r *http.Request) {
 
 	// http.Redirect(w, r, "/", http.StatusSeeOther)
 	w.WriteHeader(http.StatusOK)
-    json.NewEncoder(w).Encode(map[string]int{"postID": postID})
+    json.NewEncoder(w).Encode(map[string]interface{}{"success":true, "postID": postID})
 }
 
 //	func LogoutHandler(w http.ResponseWriter, r *http.Request) {

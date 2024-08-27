@@ -7,7 +7,6 @@ function initializeComments() {
     const postContentElement = document.getElementById('post-content');
     const commentTextarea = document.querySelector('#comment-dialog textarea[name="comment-area"]');
     const addCommentButton = document.getElementById('add-comment-button');
-    const commentsCountElement = document.getElementById('comments-count'); // Assuming this element exists
 
     const renderComments = (comments) => {
         if (!Array.isArray(comments) || comments.length === 0) {
@@ -33,9 +32,9 @@ function initializeComments() {
         }
     
         // Update comments count
-        if (commentsCountElement) {
-            commentsCountElement.textContent = `Comments (${comments.length})`;
-        }
+        // if (commentsCountElement) {
+        //     commentsCountElement.textContent = `Comments (${comments.length})`;
+        // }
     
         // Initialize the like and dislike buttons for comments
         initializeCommentLikeDislikeButtons();
@@ -115,6 +114,15 @@ function initializeComments() {
         .then(data => {
             if (data.success) {
                 // Add the new comment to the list
+                const commentsCount = document.getElementById(`post-${postId}-comments-count`)
+                if (!commentsCount?.innerText) {
+                
+                    console.error('Comments count is fucked', commentsCount)
+                    return
+                }
+                commentsCount.innerText = (Number.parseInt(commentsCount.innerText) + 1).toString()
+
+
                 renderComments(data.comments);
                 commentTextarea.value = ''; // Clear the textarea
             } else {

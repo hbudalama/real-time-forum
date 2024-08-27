@@ -126,7 +126,8 @@ function loadForum() {
                         </div>
                         <div>
                             <a href="javascript:void(0)" class="comment-icon" data-id="${post.ID}">
-                                <i class="fa fa-comment icon"></i>${post.Comments}
+                                <i class="fa fa-comment icon"></i>
+                                <span id="post-${post.ID}-comments-count">${post.Comments}</span>
                             </a>
                         </div>
                     </div>
@@ -135,7 +136,7 @@ function loadForum() {
             </div>
         `).join('');
 
-        document.getElementById('main-content').innerHTML = `<div class="index">${forumHtml}</div>`;
+        document.getElementById('main-content').innerHTML = `<div class="index" id="postss-container">${forumHtml}</div>`;
         // Reinitialize your forum JavaScript here
         initializePosts();
         initializeComments();
