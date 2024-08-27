@@ -136,7 +136,7 @@ function loadForum() {
             </div>
         `).join('');
 
-        document.getElementById('main-content').innerHTML = `<div class="index" id="postss-container">${forumHtml}</div>`;
+        document.getElementById('main-content').innerHTML = `<div class="index">${forumHtml}</div>`;
         // Reinitialize your forum JavaScript here
         initializePosts();
         initializeComments();

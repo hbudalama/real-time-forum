@@ -15,44 +15,44 @@ function initializePosts() {
             .then(response => response.json())
             .then(data => {
                 const username = data.username || 'username'; // Fallback to 'username' if no data
-                const pc = document.getElementById('postss-container')
-                pc.classList.add('hidden')
-                // container.innerHTML = ` 
-                //     <div class="post-container">
-                //         <div class="user-profile-post">
-                //             <img src="/static/images/user.png">
-                //             <div>   
-                //                 <p>${username}</p>
-                //             </div>
-                //         </div>
-                //         <form id="create-post-form">
-                //             <textarea name="title" rows="3" placeholder="What's on your mind?"></textarea>
-                //             <textarea name="content" rows="3" placeholder="Content..."></textarea>
-                //             <p>Choose a category:</p>
-                //             <ul>
-                //                 <li>
-                //                     <input type="checkbox" id="post-education" name="post-category" value="education">
-                //                     <label for="post-education">Education</label>
-                //                 </li>
-                //                 <li>
-                //                     <input type="checkbox" id="post-entertainment" name="post-category" value="entertainment">
-                //                     <label for="post-entertainment">Entertainment</label>
-                //                 </li>
-                //                 <li>
-                //                     <input type="checkbox" id="post-sports" name="post-category" value="sports">
-                //                     <label for="post-sports">Sports</label>
-                //                 </li>
-                //                 <li>
-                //                     <input type="checkbox" id="post-news" name="post-category" value="news">
-                //                     <label for="post-news">News</label>
-                //                 </li>
-                //             </ul>
-                //             <div id="post-button-container">
-                //                 <button class="post-button" type="submit">Post</button>
-                //             </div>
-                //         </form>                    
-                //     </div> 
-                // `;
+                // const pc = document.getElementById('postss-container')
+                // pc.classList.add('hidden')
+                container.innerHTML = ` 
+                    <div class="post-container">
+                        <div class="user-profile-post">
+                            <img src="/static/images/user.png">
+                            <div>   
+                                <p>${username}</p>
+                            </div>
+                        </div>
+                        <form id="create-post-form">
+                            <textarea name="title" rows="3" placeholder="What's on your mind?"></textarea>
+                            <textarea name="content" rows="3" placeholder="Content..."></textarea>
+                            <p>Choose a category:</p>
+                            <ul>
+                                <li>
+                                    <input type="checkbox" id="post-education" name="post-category" value="education">
+                                    <label for="post-education">Education</label>
+                                </li>
+                                <li>
+                                    <input type="checkbox" id="post-entertainment" name="post-category" value="entertainment">
+                                    <label for="post-entertainment">Entertainment</label>
+                                </li>
+                                <li>
+                                    <input type="checkbox" id="post-sports" name="post-category" value="sports">
+                                    <label for="post-sports">Sports</label>
+                                </li>
+                                <li>
+                                    <input type="checkbox" id="post-news" name="post-category" value="news">
+                                    <label for="post-news">News</label>
+                                </li>
+                            </ul>
+                            <div id="post-button-container">
+                                <button class="post-button" type="submit">Post</button>
+                            </div>
+                        </form>                    
+                    </div> 
+                `;
 
                 // Handle form submission via fetch
                 const form = document.getElementById('create-post-form');
@@ -69,7 +69,7 @@ function initializePosts() {
                                 alert('Post created successfully!');
                                 console.log("i have created a post!")
                                 // Hide the form and reload posts
-                                container.innerHTML = '';
+                                // container.innerHTML = '';
                                 loadPosts(); // Load and display posts dynamically
 
                             } else {
@@ -85,17 +85,21 @@ function initializePosts() {
 
 // Function to load and display posts dynamically
 function loadPosts() {
+    const container = document.getElementById('main-content');
+
     fetch('/api/posts')
         .then(response => response.json())
         .then(data => {
-            const postsContainer = document.getElementById('posts-container');
-            if (!postsContainer) {
-                console.error('Posts container element not found.');
-                return;
-            }
-            postsContainer.innerHTML = ''; // Clear existing posts
-            data.posts.forEach(post => {
-                postsContainer.innerHTML += `
+            // const postsContainer = document.getElementById('posts-container');
+            // if (!postsContainer) {
+            //     console.error('Posts container element not found.');
+            //     return;
+            // }
+            container.innerHTML = ''; // Clear existing posts
+
+            console.log('data1',data)
+            data.forEach(post => {
+                container.innerHTML += `
                     <div class="post">
                         <div class="user-profile-post">
                             <img src="/static/images/user.png">
