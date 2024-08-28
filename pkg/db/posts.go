@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 	"rtf/pkg/structs"
 )
@@ -38,11 +39,11 @@ func isOwner(post int, username string) bool {
 	return status
 }
 
-func CreatePost(title, content, username string) (int, error) {
+func CreatePost(title, content, username, category string) (int, error) {
 	var postID int
 	err := db.QueryRow(`
-		INSERT INTO post (Title, Content, Username) 
-		VALUES ($1, $2, $3) RETURNING PostID`, title, content, username).Scan(&postID)
+		INSERT INTO post (Title, Content, Username, Category) 
+		VALUES ($1, $2, $3, $4) RETURNING PostID`, title, content, username, category).Scan(&postID)
 	if err != nil {
 		return 0, err
 	}
@@ -94,7 +95,7 @@ func GetPostsByUser(username string) ([]structs.Post, error) {
 			if err := categoryRows.Scan(&category); err != nil {
 				return posts, err
 			}
-			post.Categories = append(post.Categories, category)
+			post.Category = category
 		}
 		posts = append(posts, post)
 	}
@@ -107,7 +108,7 @@ func GetAllPosts() []structs.Post {
 	defer dbMutex.Unlock()
 	rows, err := db.Query(`
 	SELECT 
-	p.PostID, p.Title, p.Content, p.Username, 
+	p.PostID, p.Title, p.Content, p.Username, p.Category, 
 	IFNULL(likes.likes, 0) as likes, 
 	IFNULL(dislikes.dislikes, 0) as dislikes, 
 	IFNULL(comments.comments, 0) as comments
@@ -127,7 +128,7 @@ func GetAllPosts() []structs.Post {
 	defer rows.Close()
 	for rows.Next() {
 		var post structs.Post
-		err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.Username, &post.Likes, &post.Dislikes, &post.Comments)
+		err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.Username, &post.Category, &post.Likes, &post.Dislikes, &post.Comments)
 		if err != nil {
 			log.Printf("Scan error: %s", err)
 			continue
@@ -138,7 +139,7 @@ func GetAllPosts() []structs.Post {
 		log.Printf("Rows error: %s", err)
 		return []structs.Post{}
 	}
-	// fmt.Printf("%+v\n", posts)
+	fmt.Printf("%+v\n", posts)
 	return posts
 }
 
@@ -149,7 +150,7 @@ func GetPostDetails(postId int) (structs.Post, structs.User, []structs.Comment, 
 		theseComments     []structs.Comment
 		theseInteractions []structs.Interaction
 	)
-	err := db.QueryRow("SELECT * FROM post WHERE id = $1", postId).Scan(&thisPost.ID, &thisPost.Title, &thisPost.Content, &thisPost.Categories)
+	err := db.QueryRow("SELECT * FROM post WHERE id = $1", postId).Scan(&thisPost.ID, &thisPost.Title, &thisPost.Content, &thisPost.Category)
 	if err != nil {
 		return structs.Post{}, structs.User{}, []structs.Comment{}, []structs.Interaction{}
 	}
@@ -266,7 +267,7 @@ func GetPost(postID int) (structs.Post, error) {
 	var post structs.Post
 	row := db.QueryRow(`
 		SELECT 
-			p.PostID, p.Title, p.Content, p.CreatedDate, p.username,
+			p.PostID, p.Title, p.Content, p.CreatedDate, p.username, p.Category,
 			IFNULL(likes.likes, 0) as likes, 
 			IFNULL(dislikes.dislikes, 0) as dislikes
 		FROM Post p
@@ -275,7 +276,7 @@ func GetPost(postID int) (structs.Post, error) {
 		LEFT JOIN (SELECT PostID, COUNT(*) as dislikes FROM Interaction WHERE Kind = 0 GROUP BY PostID) dislikes 
 		ON p.PostID = dislikes.PostID
 		WHERE p.PostID = $1`, postID)
-	err := row.Scan(&post.ID, &post.Title, &post.Content, &post.CreatedDate, &post.Username, &post.Likes, &post.Dislikes)
+	err := row.Scan(&post.ID, &post.Title, &post.Content, &post.CreatedDate, &post.Username, &post.Category, &post.Likes, &post.Dislikes)
 	if err != nil {
 		return post, err
 	}
@@ -289,7 +290,7 @@ func GetPost(postID int) (structs.Post, error) {
 		if err := rows.Scan(&category); err != nil {
 			return post, err
 		}
-		post.Categories = append(post.Categories, category)
+		post.Category = category
 	}
 	return post, nil
 }

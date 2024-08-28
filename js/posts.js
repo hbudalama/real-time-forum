@@ -112,7 +112,7 @@ function loadPosts() {
                 <a href="javascript:void(0)" class="post-title-link" data-id="${post.ID}">
                     <div>
                         <h2>${post.Title}</h2>
-                        <h4>Category: ${post.Categories}</h4>
+                        <h4>Category: ${post.Category}</h4>
                     </div>
                 </a>
                 <div class="post-row">

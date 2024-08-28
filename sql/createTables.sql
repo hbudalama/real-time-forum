@@ -10,15 +10,16 @@ CREATE TABLE IF NOT EXISTS User (
     sessionExpiration   DATETIME
 );
 
-CREATE TABLE IF NOT EXISTS Category (
-    CategoryID      INTEGER PRIMARY KEY AUTOINCREMENT,
-    CategoryName    TEXT NOT NULL UNIQUE
-);
+-- CREATE TABLE IF NOT EXISTS Category (
+--     CategoryID      INTEGER PRIMARY KEY AUTOINCREMENT,
+--     CategoryName    TEXT NOT NULL UNIQUE
+-- );
 
 CREATE TABLE IF NOT EXISTS Post (
     PostID          INTEGER PRIMARY KEY AUTOINCREMENT,
     Title           TEXT NOT NULL,
     Content         TEXT NOT NULL,
+    Category        TEXT NOT NULL,
     CreatedDate     DATETIME DEFAULT CURRENT_TIMESTAMP,
     username        TEXT,
     FOREIGN KEY (username) REFERENCES User(username)
@@ -34,13 +35,13 @@ CREATE TABLE IF NOT EXISTS Comment (
     FOREIGN KEY (username) REFERENCES User(username)
 );
 
-CREATE TABLE IF NOT EXISTS PostCategory (
-    PostCategoryID  INTEGER PRIMARY KEY AUTOINCREMENT,
-    PostID          INTEGER,
-    CategoryID      INTEGER,
-    FOREIGN KEY (PostID) REFERENCES Post(PostID),
-    FOREIGN KEY (CategoryID) REFERENCES Category(CategoryID)
-);
+-- CREATE TABLE IF NOT EXISTS PostCategory (
+--     PostCategoryID  INTEGER PRIMARY KEY AUTOINCREMENT,
+--     PostID          INTEGER,
+--     CategoryID      INTEGER,
+--     FOREIGN KEY (PostID) REFERENCES Post(PostID),
+--     FOREIGN KEY (CategoryID) REFERENCES Category(CategoryID)
+-- );
 
 CREATE TABLE IF NOT EXISTS Interaction (
     InteractionID   INTEGER PRIMARY KEY AUTOINCREMENT,

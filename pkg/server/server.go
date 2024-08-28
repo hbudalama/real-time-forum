@@ -141,7 +141,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func PostHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("i'm in post handler")
+	fmt.Println("i'm the post handler")
 	if r.Method == http.MethodGet && r.URL.Path == "/api/posts" {
 		// Get all posts from the database
 		posts := db.GetAllPosts()
@@ -209,8 +209,8 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 func GetPostHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		// This part handles fetching and displaying a post by ID
-		postIDStr := r.URL.Path[len("/api/posts/"):]
-		postID, err := strconv.Atoi(postIDStr)
+		// postIDStr := r.URL.Path[len("/api/posts/"):]
+		postID, err := strconv.Atoi(r.PathValue("id"))
 		if err != nil {
 			http.Error(w, "Invalid post ID", http.StatusBadRequest)
 			return
@@ -296,20 +296,20 @@ func GetPostHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Use the existing CreatePost function
-		postID, err := db.CreatePost(title, content, session.User.Username)
+		postID, err := db.CreatePost(title, content, session.User.Username, categories[0])
 		if err != nil {
 			http.Error(w, `{"reason": Failed to create post"}`, http.StatusInternalServerError)
 			Error500Handler(w, r)
 			return
 		}
 
-		// Save post categories
-		err = db.AddPostCategories(postID, categories)
-		if err != nil {
-			http.Error(w, `{"reason": Failed to save post categories}`, http.StatusInternalServerError)
-			Error500Handler(w, r)
-			return
-		}
+		// // Save post categories
+		// err = db.AddPostCategories(postID, categories)
+		// if err != nil {
+		// 	http.Error(w, `{"reason": Failed to save post categories}`, http.StatusInternalServerError)
+		// 	Error500Handler(w, r)
+		// 	return
+		// }
 
 		// Redirect to the newly created post page or return a success response
 		http.Redirect(w, r, fmt.Sprintf("/api/posts/%d", postID), http.StatusSeeOther)
@@ -479,7 +479,7 @@ func AddPostsHandler(w http.ResponseWriter, r *http.Request) {
 
 	title := r.FormValue("title")
 	content := r.FormValue("content")
-	categories := r.Form["post-category"] // Update to match the form field name
+	categories := r.FormValue("post-category") // Update to match the form field name
 
 	log.Printf("Received categories: %v\n", categories) // Debug print
 
@@ -491,7 +491,7 @@ func AddPostsHandler(w http.ResponseWriter, r *http.Request) {
 	var user structs.User
 	cookie, err := r.Cookie("session_token")
 	if err != nil {
-		http.Error(w, `{"reason": can't get the cookie}`, http.StatusBadRequest)
+		http.Error(w, `{"reason": "can't get the cookie"}`, http.StatusBadRequest)
 		return
 	}
 
@@ -499,25 +499,26 @@ func AddPostsHandler(w http.ResponseWriter, r *http.Request) {
 
 	session, err := db.GetSession(token)
 	if err != nil {
-		http.Error(w, `{"reason": can't get the session}`, http.StatusBadRequest)
+		http.Error(w, `{"reason": "can't get the session"}`, http.StatusBadRequest)
 		return
 	}
 	user = session.User
 
-	postID, err := db.CreatePost(title, content, user.Username)
+	postID, err := db.CreatePost(title, content, user.Username, categories)
 	if err != nil {
-		http.Error(w, `{"reason": failed to create post}`, http.StatusInternalServerError)
+		log.Println(err.Error())
+		http.Error(w, `{"reason": "failed to create post"}`, http.StatusInternalServerError)
 		Error500Handler(w, r)
 		return
 	}
 
 	// Save the categories for the post
-	err = db.AddPostCategories(postID, categories)
-	if err != nil {
-		http.Error(w, `{"reason": failed to add categories to post}`, http.StatusInternalServerError)
-		Error500Handler(w, r)
-		return
-	}
+	// err = db.AddPostCategories(postID, categories)
+	// if err != nil {
+	// 	http.Error(w, `{"reason": "failed to add categories to post"}`, http.StatusInternalServerError)
+	// 	Error500Handler(w, r)
+	// 	return
+	// }
 
 	// http.Redirect(w, r, "/", http.StatusSeeOther)
 	w.WriteHeader(http.StatusOK)
@@ -570,9 +571,9 @@ func Error400Handler(w http.ResponseWriter, r *http.Request, reason string) {
 }
 
 func Error500Handler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	// w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusInternalServerError)
-	w.Write([]byte(`{"reason": "Interval Server Error"}`))
+	// w.Write([]byte(`{"reason": "Interval Server Error"}`))
 }
 
 func Error404Handler(w http.ResponseWriter, r *http.Request) {

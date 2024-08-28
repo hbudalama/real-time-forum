@@ -101,6 +101,10 @@ function loadForum() {
     })
     .then(posts => {
         console.log(posts); // Inspect the data structure here
+        if (posts === null) {
+            console.log('no posts made.')
+                return
+        }
         const forumHtml = posts.map(post => `
             <div class="post">
                 <div class="post-row">
@@ -114,7 +118,7 @@ function loadForum() {
                 <a href="javascript:void(0)" class="post-title-link" data-id="${post.ID}">
                     <div>
                         <h2>${post.Title}</h2>
-                        <h4>Category: ${post.Categories}</h4>
+                        <h4>Category: ${post.Category}</h4>
                     </div>
                 </a>
                 <div class="post-row">

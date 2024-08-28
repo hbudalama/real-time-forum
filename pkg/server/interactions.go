@@ -27,13 +27,13 @@ func CommentsHandler(w http.ResponseWriter, r *http.Request) {
     if r.Method == http.MethodGet {
         post, err := db.GetPost(postID)
         if err != nil {
-            http.Error(w, `{"reason": Error fetching post}`, http.StatusInternalServerError)
+            http.Error(w, `{"reason": "Error fetching post"}`, http.StatusInternalServerError)
             return
         }
 
         comments, err := db.GetComments(postID)
         if err != nil {
-            http.Error(w, `{"reason": Error fetching comments}`, http.StatusInternalServerError)
+            http.Error(w, `{"reason": "Error fetching comments"}`, http.StatusInternalServerError)
             return
         }
 
@@ -47,7 +47,7 @@ func CommentsHandler(w http.ResponseWriter, r *http.Request) {
 
         w.Header().Set("Content-Type", "application/json")
         if err := json.NewEncoder(w).Encode(data); err != nil {
-            http.Error(w, `{"reason": Error encoding comments}`, http.StatusInternalServerError)
+            http.Error(w, `{"reason": "Error encoding comments"}`, http.StatusInternalServerError)
         }
         return
     }
