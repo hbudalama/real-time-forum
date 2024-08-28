@@ -320,16 +320,16 @@ func AddPostCategories(postID int, categories []string) error {
 }
 
 func GetPostInteractions(postID int) (int, int, error) {
-    var likes, dislikes int
-    err := db.QueryRow(`
+	var likes, dislikes int
+	err := db.QueryRow(`
         SELECT 
             SUM(CASE WHEN Kind = 1 THEN 1 ELSE 0 END) AS Likes,
             SUM(CASE WHEN Kind = 0 THEN 1 ELSE 0 END) AS Dislikes
         FROM Interaction
         WHERE PostID = ?
     `, postID).Scan(&likes, &dislikes)
-    if err != nil {
-        return 0, 0, err
-    }
-    return likes, dislikes, nil
+	if err != nil {
+		return 0, 0, err
+	}
+	return likes, dislikes, nil
 }

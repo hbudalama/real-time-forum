@@ -101,7 +101,8 @@ function loadPosts() {
             data.forEach(post => {
                 container.innerHTML += `
                     <div class="post">
-                       <div class="user-profile">
+                <div class="post-row">
+                    <div class="user-profile">
                         <img src="/static/images/user.png">
                         <div>
                             <p>${post.Username}</p>
@@ -111,7 +112,7 @@ function loadPosts() {
                 <a href="javascript:void(0)" class="post-title-link" data-id="${post.ID}">
                     <div>
                         <h2>${post.Title}</h2>
-                          <p>Category: ${post.Category}</p>
+                        <h4>Category: ${post.Categories}</h4>
                     </div>
                 </a>
                 <div class="post-row">
@@ -132,8 +133,7 @@ function loadPosts() {
                     <div class="post-profile-icon"></div>
                 </div>
             </div>
-                `;
-            });
+        `});
         })
         .catch(error => console.error('Error fetching posts:', error));
 }

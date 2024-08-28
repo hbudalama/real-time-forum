@@ -206,68 +206,6 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, data)
 }
 
-// func GetPostHandler(w http.ResponseWriter, r *http.Request) {
-// 	if r.Method != http.MethodGet {
-// 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-// 		return
-// 	}
-
-// 	postIDStr := r.URL.Path[len("/api/posts/"):]
-// 	postID, err := strconv.Atoi(postIDStr)
-// 	if err != nil {
-// 		http.Error(w, "Invalid post ID", http.StatusBadRequest)
-// 		return
-// 	}
-
-// 	post, err := db.GetPost(postID)
-// 	if err != nil {
-// 		Error404Handler(w, r)
-// 		return
-// 	}
-
-// 	comments, err := db.GetComments(postID)
-// 	if err != nil {
-// 		Error500Handler(w, r)
-// 		return
-// 	}
-
-// 	var user *structs.User
-// 	if LoginGuard(w, r) {
-// 		cookie, err := r.Cookie("session_token")
-// 		if err == nil {
-// 			token := cookie.Value
-// 			session, err := db.GetSession(token)
-// 			if err == nil {
-// 				user = &session.User
-// 			}
-// 		}
-// 	}
-
-// 	ctx := struct {
-// 		Post         structs.Post
-// 		Comments     []structs.Comment
-// 		LoggedInUser *structs.User
-// 	}{
-// 		Post:         post,
-// 		Comments:     comments,
-// 		LoggedInUser: user,
-// 	}
-
-// 	tmpl, err := template.ParseFiles(filepath.Join("pages", "index.html"))
-// 	if err != nil {
-// 		log.Printf("can't parse the template: %s\n", err.Error())
-// 		Error500Handler(w, r)
-// 		return
-// 	}
-
-// 	err = tmpl.Execute(w, ctx)
-// 	if err != nil {
-// 		log.Printf("can't execute the template: %s\n", err.Error())
-// 		Error500Handler(w, r)
-// 		return
-// 	}
-// }
-
 func GetPostHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		// This part handles fetching and displaying a post by ID
@@ -522,6 +460,8 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	fmt.Println(ctx.Posts)
+
 	err = tmpl.Execute(w, ctx)
 	if err != nil {
 		log.Printf("can't execute the template: %s\n", err.Error())
@@ -581,45 +521,8 @@ func AddPostsHandler(w http.ResponseWriter, r *http.Request) {
 
 	// http.Redirect(w, r, "/", http.StatusSeeOther)
 	w.WriteHeader(http.StatusOK)
-    json.NewEncoder(w).Encode(map[string]interface{}{"success":true, "postID": postID})
+	json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "postID": postID})
 }
-
-//	func LogoutHandler(w http.ResponseWriter, r *http.Request) {
-//		if !MethodsGuard(w, r, "DELETE") {
-//			http.Error(w, "only DELETE requests allowed", http.StatusMethodNotAllowed)
-//			return
-//		}
-//		if !LoginGuard(w, r) {
-//			http.Error(w, "You have to be logged in", http.StatusUnauthorized)
-//			return
-//		}
-//		cookie, err := r.Cookie("session_token")
-//		if err != nil {
-//			if err == http.ErrNoCookie {
-//				http.Error(w, "No session token found", http.StatusUnauthorized)
-//				return
-//			}
-//			log.Printf("can't get the cookie: %s\n", err.Error())
-//			Error500Handler(w, r)
-//			return
-//		}
-//		err = db.DeleteSession(cookie.Value)
-//		if err != nil {
-//			log.Printf("LogoutHandler: %s", err.Error())
-//			Error500Handler(w, r)
-//			return
-//		}
-//		// Clear the session cookie
-//		http.SetCookie(w, &http.Cookie{
-//			Name:     "session_token",
-//			Value:    "",
-//			Expires:  time.Unix(0, 0),
-//			HttpOnly: true,
-//			// MaxAge: -1,
-//			Path: "/",
-//		})
-//		w.WriteHeader(http.StatusOK)
-//	}
 
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	if !MethodsGuard(w, r, "GET") {
