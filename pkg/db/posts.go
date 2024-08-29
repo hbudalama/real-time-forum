@@ -139,7 +139,6 @@ func GetAllPosts() []structs.Post {
 		log.Printf("Rows error: %s", err)
 		return []structs.Post{}
 	}
-	fmt.Printf("%+v\n", posts)
 	return posts
 }
 
@@ -276,22 +275,14 @@ func GetPost(postID int) (structs.Post, error) {
 		LEFT JOIN (SELECT PostID, COUNT(*) as dislikes FROM Interaction WHERE Kind = 0 GROUP BY PostID) dislikes 
 		ON p.PostID = dislikes.PostID
 		WHERE p.PostID = $1`, postID)
+
 	err := row.Scan(&post.ID, &post.Title, &post.Content, &post.CreatedDate, &post.Username, &post.Category, &post.Likes, &post.Dislikes)
 	if err != nil {
+		log.Printf("Error fetching post with ID %d: %v", postID, err)
 		return post, err
 	}
-	rows, err := db.Query("SELECT CategoryName FROM Category c INNER JOIN PostCategory pc ON c.CategoryID = pc.CategoryID WHERE pc.PostID = $1", postID)
-	if err != nil {
-		return post, err
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var category string
-		if err := rows.Scan(&category); err != nil {
-			return post, err
-		}
-		post.Category = category
-	}
+
+	// No need to fetch categories separately, as it's already in the Post table.
 	return post, nil
 }
 
