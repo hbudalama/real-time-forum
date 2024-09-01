@@ -92,6 +92,19 @@ function loadForum() {
     document.querySelector('nav').classList.remove('hidden');
     document.querySelector('.left-sidebar').classList.remove('hidden');
 
+    fetch('/api/get_user_info')
+    .then(response => response.json())
+    .then(data => {
+        if (data.username) {
+            const greetingDiv = document.getElementById('greeting');
+            greetingDiv.textContent = `Hello, ${data.username}!`;
+        }
+    })
+    .catch(error => {
+        console.error('Error fetching user info:', error);
+    });
+
+
     fetch('/api/posts')
     .then(response => {
         if (!response.ok) {

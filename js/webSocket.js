@@ -7,7 +7,7 @@ socket.onopen = function(event) {
 
 socket.onmessage = function(event) {
     console.log("yay! ig");
-    console.log("Message from server: ", event.data);
+    console.log("Message from server: ", event);
 };
 
 socket.onclose = function(event) {
@@ -17,3 +17,26 @@ socket.onclose = function(event) {
 socket.onerror = function(error) {
     console.error("WebSocket error: ", error);
 };
+
+/*
+
+type1
+usersList
+type: usersList
+payload: {
+    status {
+             typing:
+        }
+
+    }
+
+type2
+chatMessages
+
+type3
+onlineUsers
+
+type3
+notifications
+
+*/

@@ -64,12 +64,12 @@ type PostContext struct {
 	Comments     []Comment
 }
 
-type Message struct {
-	SenderUsername    string
-	RecipientUsername string
-	Content           string
-	CreatedDate       string
-}
+// type Message struct {
+// 	SenderUsername    string
+// 	RecipientUsername string
+// 	Content           string
+// 	CreatedDate       string
+// }
 
 type PageData struct {
 	Ages []int

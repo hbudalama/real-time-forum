@@ -499,3 +499,10 @@ button:hover {
 .hidden {
     display: none;
 }
+
+.greeting {
+    color: whitesmoke;
+    font-size: larger;
+    margin-top: 10px;
+    margin-left: 10px;
+}
