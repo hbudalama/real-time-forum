@@ -30,6 +30,8 @@ func main() {
 	})
 
 	// API handlers
+	mux.HandleFunc("/api/ws", server.Echo)
+
 	mux.HandleFunc("/api/login", server.LoginHandler) //fetched
 	mux.HandleFunc("/api/posts", server.PostHandler) // fetched
 	mux.HandleFunc("/api/posts/{id}/comments", server.CommentsHandler) //fetched
@@ -44,6 +46,8 @@ func main() {
 	mux.HandleFunc("/api/check_session", server.CheckSessionHandler) // fetched
 	mux.HandleFunc("/api/get_ages", server.GetAgesHandler) //fetched
 	mux.HandleFunc("/api/get_user_info", server.GetUserInfoHandler) //fetched
+	mux.HandleFunc("/api/usernames", server.GetAllUsernamesHandler)
+	
 
 	log.Println("Serving on http://localhost:8080")
 	err := http.ListenAndServe(":8080", mux)

@@ -676,3 +676,16 @@ func GetUserInfoHandler(w http.ResponseWriter, r *http.Request) {
 		// Add any other fields you want to return
 	})
 }
+
+func GetAllUsernamesHandler(w http.ResponseWriter, r *http.Request) {
+    users, err := db.GetAllUsernames()
+    if err != nil {
+        http.Error(w, `{"reason": "Error fetching usernames"}`, http.StatusInternalServerError)
+        return
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(users)
+}
+
+

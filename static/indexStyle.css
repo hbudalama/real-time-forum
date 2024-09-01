@@ -78,7 +78,7 @@ nav {
 } */
 
 .user-list-profile {
-    width: 45px;
+    /* width: 45px; */
     border-radius: 50%;
     cursor: pointer;
 }

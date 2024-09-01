@@ -73,3 +73,21 @@ func GetAllUsers() ([]structs.User, error) {
 	}
 	return users, nil
 }
+
+func GetAllUsernames() ([]string, error) {
+    rows, err := db.Query("SELECT Username FROM User")
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    var usernames []string
+    for rows.Next() {
+        var username string
+        if err := rows.Scan(&username); err != nil {
+            return nil, err
+        }
+        usernames = append(usernames, username)
+    }
+    return usernames, nil
+}

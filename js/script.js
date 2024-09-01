@@ -143,15 +143,51 @@ function loadForum() {
 
         document.getElementById('main-content').innerHTML = `<div class="index">${forumHtml}</div>`;
         // Reinitialize your forum JavaScript here
+        loadUsernames().then(() => {
+            // initializeChat();
+        })
+
         initializePosts();
         initializeComments();
-        initializeChat();
         initializeLikeDislikeButtons();
     })
     .catch(error => {
         console.error('There has been a problem with your fetch operation:', error);
     });
 
+}
+
+// {
+//     type: 'user_list',
+//     payload: {
+//         list: [
+//             {
+//                 username:  'hanan',
+//                 state: 'offline'
+//             }
+//         ]
+//     }
+// }
+
+
+
+
+function loadUsernames() {
+    return fetch('/api/usernames')
+        .then(response => response.json())
+        .then(usernames => {
+            const usersList = document.querySelector('.users-list');
+            usersList.innerHTML = usernames.map(username => `
+                <div data-username="${username}" class="user-list-profile" onclick="initializeChat(event)">
+                    <img src="/static/images/user.png" class="user-icon">
+                    <div>
+                        <p>${username}</p>
+                    </div>
+                </div>
+            `).join('');
+
+        })
+        .catch(error => console.error('Error fetching usernames:', error));
 }
 
 
