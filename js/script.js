@@ -227,15 +227,31 @@ function handleLogin(event) {
         body: formData,
         credentials: 'include'
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(errorData => {
+                const errorMessage = errorData.reason || "An unknown error occurred.";
+                console.error('Error:', errorMessage);
+                alert(`Error: ${errorMessage}`);
+                throw new Error(errorMessage);
+            });
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.isAuthenticated) {
             loadForum();
         } else {
-            document.getElementById('loginError').innerText = "Invalid login credentials.";
+            const errorMessage = "Invalid login credentials.";
+            console.error('Error:', errorMessage);
+            // alert(`Error: ${errorMessage}`);
+            document.getElementById('loginError').innerText = errorMessage;
         }
     })
-    .catch(error => console.error('Error:', error));
+    .catch(error => {
+        console.error('Error:', error.message);
+        // alert(`Error: ${error.message}`);
+    });
 }
 
 function logoutHandler() {
@@ -272,10 +288,46 @@ function validateForm() {
     return true;
 }
 
+// function handleSignup(event) {
+//     console.log("work u mf")
+//     event.preventDefault();
+//     const formData = new FormData(event.target);
+
+//     fetch("/api/signup", {
+//         method: 'POST',
+//         body: formData,
+//         credentials: 'include'
+//     })
+//     .then(response => {
+//         return response.json(); // Parse the JSON from the response
+//     })
+//     .then(data => {
+//         if (data.success) {
+//             alert("please log in.")
+//         } else {
+//             document.getElementById('registerField').innerText = data.reason || "Signup failed.";
+//         }
+//     })
+//     .catch(error => {
+//         document.getElementById('registerField').innerText = error.message || "An error occurred during signup.";
+//         console.error('Error:', error);
+//     });
+// }
+
 function handleSignup(event) {
-    console.log("work u mf")
     event.preventDefault();
+    
     const formData = new FormData(event.target);
+    const password = formData.get('password');
+    const confirmPassword = formData.get('confirmPassword');
+
+    // Check if passwords match before sending the request
+    if (password !== confirmPassword) {
+        const errorMessage = "Passwords do not match!";
+        console.error(errorMessage);
+        alert(errorMessage);
+        return; // Prevent form submission if passwords don't match
+    }
 
     fetch("/api/signup", {
         method: 'POST',
@@ -283,17 +335,24 @@ function handleSignup(event) {
         credentials: 'include'
     })
     .then(response => {
-        return response.json(); // Parse the JSON from the response
+        if (!response.ok) {
+            return response.json().then(errorData => {
+                const errorMessage = errorData.reason || "Signup failed.";
+                console.error('Error:', errorMessage);
+                alert(`Error: ${errorMessage}`);
+                throw new Error(errorMessage);
+            });
+        }
+        return response.json();
     })
     .then(data => {
         if (data.success) {
-            alert("please log in.")
-        } else {
-            document.getElementById('registerField').innerText = data.reason || "Signup failed.";
+            alert("Signup successful! Please log in.");
+            // Optionally, redirect to the login page or clear the form here
         }
     })
     .catch(error => {
-        document.getElementById('registerField').innerText = error.message || "An error occurred during signup.";
-        console.error('Error:', error);
+        console.error('Error:', error.message);
+        // alert(`Error: ${error.message}`);
     });
 }
