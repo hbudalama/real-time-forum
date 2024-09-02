@@ -55,15 +55,7 @@ func Echo(w http.ResponseWriter, r *http.Request) {
 			connection.WriteJSON(Message{Type: messageTypeError, Payload: "BAD REQUEST!"})
 			continue
 		}
-		// fmt.Println("Received message: ", message.Type) // Log the received message
-
-		// // Echo the message back to the client
-		// err = connection.WriteJSON(message)
-		// if err != nil {
-		// 	log.Printf("Error writing message: %v", err)
-		// 	break
-		// }
-
+		
 		switch message.Type {
 		case messageTypeUserList:
 			userListHandler(connection)
@@ -90,6 +82,7 @@ func MessageHandler(message []byte) {
 	fmt.Println("this is message handler: " + string(message))
 }
 
+//--broadcasting--
 // func WriteMessage(message []byte) {
 // 	for conn := range clients {
 // 		fmt.Println("this is write message:")
