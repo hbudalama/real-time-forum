@@ -1,4 +1,4 @@
- package db
+package db
 
 // import (
 // 	"fmt"
@@ -93,3 +93,12 @@
 // 		fmt.Println("Error saving message to DB:", err)
 // 	}
 // }
+
+func SaveChatMessage(sender, recipient, content string) error {
+	stmt, err := db.Prepare("INSERT INTO Chat (SenderUsername, RecipientUsername, Content) VALUES (?, ?, ?)")
+	if err != nil {
+		return err
+	}
+	_, err = stmt.Exec(sender, recipient, content)
+	return err
+}
