@@ -30,13 +30,6 @@ function initializeComments() {
             `).join('');
             commentList.innerHTML = commentItems;
         }
-    
-        // Update comments count
-        // if (commentsCountElement) {
-        //     commentsCountElement.textContent = `Comments (${comments.length})`;
-        // }
-    
-        // Initialize the like and dislike buttons for comments
         initializeCommentLikeDislikeButtons();
     };
 

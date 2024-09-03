@@ -10,6 +10,12 @@ socket.onopen = function(event) {
         Payload: null
     });
     socket.send(requestMessage)
+
+    const requestMessageChat = JSON.stringify({
+        Type: "CHAT_MESSAGE",
+        Payload: null
+    });
+    socket.send(requestMessageChat)
 };
 
 socket.onmessage = function(event) {
@@ -21,7 +27,10 @@ socket.onmessage = function(event) {
         if (message.Type === "USER_LIST") {
             console.log("Received user list: ", message.Payload);
             // you can update the UI with the list of users, e.g., display them in a sidebar
-        } else {
+        } else if (message.Type === "CHAT_MESSAGE") {
+            console.log("let's pretend this is the Chat")
+        }
+        else {
             console.log("Unhandled message type: ", message.Type);
         }
     } catch (err) {
@@ -44,18 +53,29 @@ type1
 usersList
 type: usersList
 payload: {
-    status {
-             typing:
-        }
+    { username: haneen
+      status: online }
 
-    }
+    { username: fatema
+      status: offline }
+      
+    { username: spiderman
+      status: typing
+      }
+
 
 type2
 chatMessages
+Type: CHAT_MESSAGE
+Payload:
+    { sender: haneen
+     receipent: fatema
+     content:hey pookie! are you coming to reboot today? }
 
-type3
-onlineUsers
-
+    { sender: fatima
+     receipent: haneen
+     content: hi pooks, Yes! }
+    
 type3
 notifications
 

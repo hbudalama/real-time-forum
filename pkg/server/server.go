@@ -208,8 +208,6 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 
 func GetPostHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
-		// This part handles fetching and displaying a post by ID
-		// postIDStr := r.URL.Path[len("/api/posts/"):]
 		postID, err := strconv.Atoi(r.PathValue("id"))
 		if err != nil {
 			http.Error(w, "Invalid post ID", http.StatusBadRequest)
@@ -512,15 +510,6 @@ func AddPostsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Save the categories for the post
-	// err = db.AddPostCategories(postID, categories)
-	// if err != nil {
-	// 	http.Error(w, `{"reason": "failed to add categories to post"}`, http.StatusInternalServerError)
-	// 	Error500Handler(w, r)
-	// 	return
-	// }
-
-	// http.Redirect(w, r, "/", http.StatusSeeOther)
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "postID": postID})
 }
@@ -559,8 +548,6 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	})
 
 	fmt.Println("i logged out")
-	// w.Header().Set("Content-Type", "application/json")
-	// w.Write([]byte(`{"success": true, "message": "Logged out successfully"}`))
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
 

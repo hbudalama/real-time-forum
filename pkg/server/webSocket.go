@@ -14,11 +14,23 @@ const (
 	messageTypeError          = "ERROR"
 	messageTypeUserList       = "USER_LIST"
 	messageTypeUnhandledEvent = "UNHANDLED_EVENT"
+	messageTypeChatMessage	  = "CHAT_MESSAGE"
 )
 
 type Message struct {
 	Type    string
 	Payload any
+}
+
+type Users struct {
+	Username string 
+	Status string
+}
+
+type ChatMessage struct {
+	Sender string
+	Recipient string
+	Content string
 }
 
 var upgrader = websocket.Upgrader{
@@ -60,6 +72,9 @@ func Echo(w http.ResponseWriter, r *http.Request) {
 		case messageTypeUserList:
 			userListHandler(connection)
 
+		case messageTypeChatMessage:
+			chatMessageHandler(connection)
+
 		default:
 			connection.WriteJSON(Message{Type: messageTypeUnhandledEvent, Payload: fmt.Sprintf("[%s] is not handled", message.Type)})
 		}
@@ -67,15 +82,51 @@ func Echo(w http.ResponseWriter, r *http.Request) {
 }
 
 func userListHandler(conn *websocket.Conn) {
-	users, err := db.GetAllUsernames()
-	if err != nil {
-		log.Printf("error geting users list: %v", err)
-	}
+    dbUsers, err := db.GetAllUsernames() // Assuming this returns a slice of usernames
+    if err != nil {
+        log.Printf("error getting users list: %v", err)
+        return
+    }
 
-	// write json message {type:USERS_LIST payload: array of users}
-	conn.WriteJSON(Message{Type: messageTypeUserList, Payload: users})
-	fmt.Println(users)
-	
+    // Creating a list of User structs with some statuses
+    users := make([]Users, len(dbUsers))
+    for i, username := range dbUsers {
+        users[i] = Users{
+            Username: username,
+            // Assign status based on your application's logic
+            Status: "online", // Default status, or customize based on your logic
+        }
+    }
+
+    // Send the users list as JSON
+    message := Message{
+        Type:    "USER_LIST",
+        Payload: users,
+    }
+
+    if err := conn.WriteJSON(message); err != nil {
+        log.Printf("error writing users list: %v", err)
+    }
+
+    fmt.Println(users)
+}
+
+
+func chatMessageHandler(conn *websocket.Conn) {
+	chatMessages := []ChatMessage{
+        {Sender: "haneen", Recipient: "fatema", Content: "hey pookie! are you coming to reboot today?"},
+        {Sender: "fatema", Recipient: "haneen", Content: "hi pooks, Yes!"},
+    }
+
+    // Write JSON message with type CHAT_MESSAGE and payload as an array of chat messages
+    message := Message{
+        Type:    "CHAT_MESSAGE",
+        Payload: chatMessages,
+    }
+
+    if err := conn.WriteJSON(message); err != nil {
+        log.Printf("error writing chat message: %v", err)
+    }
 }
 
 func MessageHandler(message []byte) {

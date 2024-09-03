@@ -15,8 +15,6 @@ function initializePosts() {
             .then(response => response.json())
             .then(data => {
                 const username = data.username || 'username'; // Fallback to 'username' if no data
-                // const pc = document.getElementById('postss-container')
-                // pc.classList.add('hidden')
                 container.innerHTML = ` 
                     <div class="post-container">
                         <div class="user-profile-post">
@@ -90,11 +88,6 @@ function loadPosts() {
     fetch('/api/posts')
         .then(response => response.json())
         .then(data => {
-            // const postsContainer = document.getElementById('posts-container');
-            // if (!postsContainer) {
-            //     console.error('Posts container element not found.');
-            //     return;
-            // }
             container.innerHTML = ''; // Clear existing posts
 
             console.log('data1',data)

@@ -104,7 +104,6 @@ function loadForum() {
         console.error('Error fetching user info:', error);
     });
 
-
     fetch('/api/posts')
     .then(response => {
         if (!response.ok) {
@@ -170,21 +169,6 @@ function loadForum() {
 
 }
 
-// {
-//     type: 'user_list',
-//     payload: {
-//         list: [
-//             {
-//                 username:  'hanan',
-//                 state: 'offline'
-//             }
-//         ]
-//     }
-// }
-
-
-
-
 function loadUsernames() {
     return fetch('/api/usernames')
         .then(response => response.json())
@@ -202,7 +186,6 @@ function loadUsernames() {
         })
         .catch(error => console.error('Error fetching usernames:', error));
 }
-
 
 function loadAges() {
     fetch('/api/get_ages')
@@ -288,31 +271,6 @@ function validateForm() {
     return true;
 }
 
-// function handleSignup(event) {
-//     console.log("work u mf")
-//     event.preventDefault();
-//     const formData = new FormData(event.target);
-
-//     fetch("/api/signup", {
-//         method: 'POST',
-//         body: formData,
-//         credentials: 'include'
-//     })
-//     .then(response => {
-//         return response.json(); // Parse the JSON from the response
-//     })
-//     .then(data => {
-//         if (data.success) {
-//             alert("please log in.")
-//         } else {
-//             document.getElementById('registerField').innerText = data.reason || "Signup failed.";
-//         }
-//     })
-//     .catch(error => {
-//         document.getElementById('registerField').innerText = error.message || "An error occurred during signup.";
-//         console.error('Error:', error);
-//     });
-// }
 
 function handleSignup(event) {
     event.preventDefault();
