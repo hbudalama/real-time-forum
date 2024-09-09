@@ -132,10 +132,17 @@ func userListHandler(conn *websocket.Conn) {
 	// Creating a list of User structs with some statuses
 	users := make([]Users, len(dbUsers))
 	for i, username := range dbUsers {
+		// Check if the user has a valid session
+		session, err := db.GetSessionByUsername(username)
+		status := "offline" // Default status
+
+		if err == nil && session != nil && db.IsSessionValid(session.Token) {
+			status = "online"
+		}
+
 		users[i] = Users{
 			Username: username,
-			// Assign status based on your application's logic
-			Status: "online", // Default status, or customize based on your logic
+			Status:   status,
 		}
 	}
 
