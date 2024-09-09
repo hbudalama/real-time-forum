@@ -19,24 +19,43 @@ socket.onopen = function(event) {
 };
 
 socket.onmessage = function(event) {
-    console.log("Message from server: ", event.data);
-
-    // handle in console
     try {
         const message = JSON.parse(event.data);
+
         if (message.Type === "USER_LIST") {
             console.log("Received user list: ", message.Payload);
-            // you can update the UI with the list of users, e.g., display them in a sidebar
+
+            // Update the UI with the list of users and their statuses
+            const usersList = document.querySelector('.users-list');
+            usersList.innerHTML = message.Payload.map(user => `
+                <div data-username="${user.Username}" class="user-list-profile" onclick="initializeChat(event)">
+                    <img src="/static/images/user.png" class="user-icon">
+                    <div>
+                        <p>${user.Username}</p>
+                        <p class="user-status">${user.Status}</p> <!-- Display status -->
+                    </div>
+                </div>
+            `).join('');
         } else if (message.Type === "CHAT_MESSAGE") {
-            console.log("let's pretend this is the Chat")
-        }
-        else {
+            const chatMessage = message.Payload;
+            displayMessage(chatMessage.Sender, chatMessage.Content);
+        } else if (message.Type === "CHAT_HISTORY") {
+            const messages = message.Payload;
+
+            // Check if messages is a valid array before proceeding
+            if (Array.isArray(messages) && messages.length > 0) {
+                for (let i = messages.length - 1; i >= 0; i--) {
+                    displayMessage(messages[i].Sender, messages[i].Content);
+                }
+            } else {
+                console.log("No chat history found or invalid message payload.");
+            }
+        } else {
             console.log("Unhandled message type: ", message.Type);
         }
     } catch (err) {
         console.error("Error parsing websocket message: ", err);
     }
-
 };
 
 socket.onclose = function(event) {
@@ -47,36 +66,52 @@ socket.onerror = function(error) {
     console.error("WebSocket error: ", error);
 };
 
-/*
 
-type1
-usersList
-type: usersList
-payload: {
-    { username: haneen
-      status: online }
+function displayMessage(sender, content) {
+    const messageContainer = document.getElementById('chat-messages');
+    if (!messageContainer) return;
 
-    { username: fatema
-      status: offline }
-      
-    { username: spiderman
-      status: typing
-      }
+    const messageElement = document.createElement('div');
+    messageElement.classList.add('message');
+    messageElement.innerHTML = `<strong>${sender}:</strong> ${content}`;
+    messageContainer.appendChild(messageElement);
 
+    // Scroll to the bottom (for new messages)
+    messageContainer.scrollTop = messageContainer.scrollHeight;
+}
 
-type2
-chatMessages
-Type: CHAT_MESSAGE
-Payload:
-    { sender: haneen
-     receipent: fatema
-     content:hey pookie! are you coming to reboot today? }
+let offset = 10; // Initial offset for chat messages
 
-    { sender: fatima
-     receipent: haneen
-     content: hi pooks, Yes! }
-    
-type3
-notifications
+function loadMoreMessages() {
+    const chatMessagesDiv = document.getElementById('chat-messages');
 
-*/
+    if (chatMessagesDiv.scrollTop === 0) { // Scrolled to top
+        // Send request to load 10 more messages
+        const username = document.getElementById('user-name-chat').textContent;
+
+        const chatHistoryRequest = {
+            Type: 'CHAT_HISTORY',
+            Payload: {
+                Sender: 'fatima', // Current user (replace dynamically)
+                Recipient: username,
+                Limit: 10,
+                Offset: offset // Load the next batch of 10
+            }
+        };
+
+        socket.send(JSON.stringify(chatHistoryRequest));
+        offset += 10; // Increase offset for the next request
+    }
+}
+
+function throttle(func, delay) {
+    let lastCall = 0;
+    return function (...args) {
+        const now = new Date().getTime();
+        if (now - lastCall < delay) {
+            return;
+        }
+        lastCall = now;
+        return func(...args);
+    };
+}

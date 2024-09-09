@@ -15,6 +15,7 @@ const (
 	messageTypeUserList       = "USER_LIST"
 	messageTypeUnhandledEvent = "UNHANDLED_EVENT"
 	messageTypeChatMessage    = "CHAT_MESSAGE"
+	messageTypeChatHistory    = "CHAT_HISTORY"
 )
 
 type Message struct {
@@ -46,6 +47,7 @@ type Client struct {
 
 var clients []Client
 
+
 func Echo(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("I'm in echo")
 	connection, err := upgrader.Upgrade(w, r, nil)
@@ -53,7 +55,6 @@ func Echo(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Failed to upgrade to WebSocket: %v", err)
 		return
 	}
-	defer connection.Close()
 
 	// Retrieve session token from the HTTP request (e.g., from cookies)
 	cookie, err := r.Cookie("session_token")
@@ -70,6 +71,9 @@ func Echo(w http.ResponseWriter, r *http.Request) {
 	}
 	clients = append(clients, client)
 
+	// Send the updated user list to all clients after a new connection
+	userListHandler()
+
 	defer func() {
 		// Remove client from the list upon disconnect
 		for i, c := range clients {
@@ -79,6 +83,9 @@ func Echo(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		connection.Close()
+
+		// Send the updated user list to all clients after a disconnection
+		userListHandler()
 	}()
 
 	for {
@@ -104,7 +111,8 @@ func Echo(w http.ResponseWriter, r *http.Request) {
 
 		switch message.Type {
 		case messageTypeUserList:
-			userListHandler(connection)
+			// No need to pass the connection; send the list to all clients
+			userListHandler()
 
 		case messageTypeChatMessage:
 			// Extract the chat message from the payload
@@ -116,20 +124,36 @@ func Echo(w http.ResponseWriter, r *http.Request) {
 			}
 			chatMessageHandler(connection, chatMessage)
 
+		case messageTypeChatHistory:
+			//complete here
+			var historyRequest struct {
+                Sender       string 
+                Recipient    string
+                Limit        int
+                Offset       int
+            }
+            if payload, ok := message.Payload.(map[string]interface{}); ok {
+                historyRequest.Sender = payload["Sender"].(string)
+                historyRequest.Recipient = payload["Recipient"].(string)
+                historyRequest.Limit = int(payload["Limit"].(float64))
+                historyRequest.Offset = int(payload["Offset"].(float64))
+            }
+			// chatHistoryHandler(connection, historyRequest)
+
 		default:
 			connection.WriteJSON(Message{Type: messageTypeUnhandledEvent, Payload: fmt.Sprintf("[%s] is not handled", message.Type)})
 		}
 	}
 }
 
-func userListHandler(conn *websocket.Conn) {
+func userListHandler() {
 	dbUsers, err := db.GetAllUsernames() // Assuming this returns a slice of usernames
 	if err != nil {
-		log.Printf("error getting users list: %v", err)
+		log.Printf("Error getting users list: %v", err)
 		return
 	}
 
-	// Creating a list of User structs with some statuses
+	// Creating a list of User structs with their statuses
 	users := make([]Users, len(dbUsers))
 	for i, username := range dbUsers {
 		// Check if the user has a valid session
@@ -146,35 +170,21 @@ func userListHandler(conn *websocket.Conn) {
 		}
 	}
 
-	// Send the users list as JSON
+	// Create the message to send to all clients
 	message := Message{
 		Type:    "USER_LIST",
 		Payload: users,
 	}
 
-	if err := conn.WriteJSON(message); err != nil {
-		log.Printf("error writing users list: %v", err)
+	// Send the users list to all connected clients
+	for _, client := range clients {
+		if err := client.Conn.WriteJSON(message); err != nil {
+			log.Printf("Error writing users list to client: %v", err)
+		}
 	}
 
 	fmt.Println(users)
 }
-
-// func chatMessageHandler(conn *websocket.Conn) {
-// 	chatMessages := []ChatMessage{
-//         {Sender: "haneen", Recipient: "fatema", Content: "hey pookie! are you coming to reboot today?"},
-//         {Sender: "fatema", Recipient: "haneen", Content: "hi pooks, Yes!"},
-//     }
-
-//     // Write JSON message with type CHAT_MESSAGE and payload as an array of chat messages
-//     message := Message{
-//         Type:    "CHAT_MESSAGE",
-//         Payload: chatMessages,
-//     }
-
-//     if err := conn.WriteJSON(message); err != nil {
-//         log.Printf("error writing chat message: %v", err)
-//     }
-// }
 
 func chatMessageHandler(conn *websocket.Conn, chatMsg ChatMessage) {
 	// Save the chat message to the database
@@ -208,19 +218,11 @@ func chatMessageHandler(conn *websocket.Conn, chatMsg ChatMessage) {
 	}
 }
 
+// chatHistoryHandler(conn *websocket.Conn, chatMsg structs.chatMessage) {
+// complete later
+// }
+
 func MessageHandler(message []byte) {
 	fmt.Println("this is message handler: " + string(message))
 }
 
-//--broadcasting--
-// func WriteMessage(message []byte) {
-// 	for conn := range clients {
-// 		fmt.Println("this is write message:")
-// 		err := conn.WriteMessage(websocket.TextMessage, message)
-// 		if err != nil {
-// 			log.Printf("Error writing message: %v", err)
-// 			conn.Close()
-// 			delete(clients, conn) // Remove the client from the map
-// 		}
-// 	}
-// }

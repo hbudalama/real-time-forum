@@ -11,6 +11,18 @@ function initializeChat(event) {
 
     // Open chat UI and display the selected user's information
     openChatWindow(username);
+
+    // Send a request to the server to get the last 10 messages
+    const chatHistoryRequest = {
+        Type: 'CHAT_HISTORY',
+        Payload: {
+            Sender: 'fatima', // Current user (replace dynamically)
+            Recipient: username,
+            Limit: 10, // Load the last 10 messages
+            Offset: 0  // No offset initially
+        }
+    };
+     socket.send(JSON.stringify(chatHistoryRequest));
 }
 
 function openChatWindow(username) {
@@ -23,8 +35,8 @@ function openChatWindow(username) {
     }
 
     // Example: Clear existing content and show the new chat UI
-    container.innerHTML = `
-        <div id="chat-div">
+    container.innerHTML = 
+        `<div id="chat-div">
             <div id="user-info-chat">
                 <img src="/static/images/user.png" id="user-pic" alt="User Picture">
                 <p id="user-name-chat">${username}</p>
@@ -34,8 +46,10 @@ function openChatWindow(username) {
             </div>
             <textarea id="chat-input" placeholder="Type your message here..."></textarea>
             <button id="send-message-button">Send</button>
-        </div>
-    `;
+        </div>`
+    ;
+
+    document.getElementById('chat-messages').addEventListener('scroll', throttle(loadMoreMessages, 500));
 
     // Set up event listeners for the chat input and send button
     document.getElementById('send-message-button').addEventListener('click', sendMessage);
@@ -55,19 +69,22 @@ function sendMessage() {
         return;
     }
     
+    // Get the sender username from a global state, session, or another variable
+    const sender = 'fatima'; // Replace this with how you're managing the logged-in user
+
     // Send the message through WebSocket
     const chatMessage = {
-        Type: 'chatMessage',
-        Payload: JSON.stringify({
-            Sender: 'currentUsername', // Replace with actual current username
+        Type: 'CHAT_MESSAGE',
+        Payload: {
+            Sender: sender, // Set the actual sender username
             Recipient: document.getElementById('user-name-chat').textContent,
             Content: message
-        })
+        }
     };
     
     // Assuming you have a global WebSocket variable
-    if (WebSocket) {
-        WebSocket.Send(JSON.stringify(chatMessage));
+    if (socket) {
+        socket.send(JSON.stringify(chatMessage));
         chatInput.value = ''; // Clear input after sending
     } else {
         console.error("WebSocket is not connected.");

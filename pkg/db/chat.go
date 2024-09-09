@@ -1,5 +1,10 @@
 package db
 
+import (
+	"log"
+	"rtf/pkg/structs"
+)
+
 // import (
 // 	"fmt"
 // 	"net/http"
@@ -95,10 +100,50 @@ package db
 // }
 
 func SaveChatMessage(sender, recipient, content string) error {
+	log.Printf("Saving message from sender: %s to recipient: %s with content: %s", sender, recipient, content)
+
 	stmt, err := db.Prepare("INSERT INTO Chat (SenderUsername, RecipientUsername, Content) VALUES (?, ?, ?)")
 	if err != nil {
 		return err
 	}
 	_, err = stmt.Exec(sender, recipient, content)
 	return err
+}
+
+func GetChatHistory(sender, recipient string, limit, offset int) ([]structs.ChatMessage, error) {
+	log.Printf("SQL query: sender=%s, recipient=%s", sender, recipient)
+
+	rows, err := db.Query(`
+        SELECT SenderUsername, RecipientUsername, Content, CreatedDate
+        FROM Chat
+        WHERE (SenderUsername = ? AND RecipientUsername = ?) OR (SenderUsername = ? AND RecipientUsername = ?)
+        ORDER BY CreatedDate DESC
+        LIMIT ? OFFSET ?, sender, recipient, recipient, sender, limit, offset`)
+	if err != nil {
+		log.Printf("Error executing query: %v", err)
+		return nil, err
+	}
+	log.Println("Query executed successfully")
+
+	defer rows.Close()
+
+	var messages []structs.ChatMessage
+	for rows.Next() {
+		var message structs.ChatMessage
+		var createdDate string
+		if err := rows.Scan(&message.Sender, &message.Recipient, &message.Content, &createdDate); err != nil {
+			log.Println("Query executed successfully")
+			return nil, err
+		}
+		message.Content += " (" + createdDate + ")" // Append date to the content
+		messages = append(messages, message)
+	}
+
+	log.Printf("Fetched chat history: %v", messages)
+
+	if len(messages) == 0 {
+		return nil, nil // Return nil if no messages found
+	}
+
+	return messages, nil
 }

@@ -65,10 +65,10 @@ type PostContext struct {
 }
 
 type ChatMessage struct {
-	SenderUsername    string
-	RecipientUsername string
-	Content           string
-	CreatedDate       string
+	Sender      string
+	Recipient   string
+	Content     string
+	CreatedDate string
 }
 
 type PageData struct {
