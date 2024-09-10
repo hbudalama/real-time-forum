@@ -1,3 +1,4 @@
+import {initializeWebSocket} from './webSocket.js'
 document.addEventListener('DOMContentLoaded', function () {
     fetch('/api/check_session')
         .then(response => {
@@ -77,6 +78,7 @@ function loadLoginForm() {
     const registerField = document.getElementById('registerField');
     const loginError = document.getElementById('loginError');
     const registerError = document.getElementById('registerError');
+    const submitBtn = document.querySelector('.submit-btn');
 
     loginBtn.addEventListener('click', () => {
         loginField.style.display = 'flex';
@@ -91,6 +93,11 @@ function loadLoginForm() {
         loginError.style.display = 'none';
         registerError.style.display = 'none';
     });
+
+    submitBtn.addEventListener('click', () => {
+        handleLogin()
+    });
+
 }
 
 function loadForum() {
@@ -161,9 +168,9 @@ function loadForum() {
 
         document.getElementById('main-content').innerHTML = `<div class="index">${forumHtml}</div>`;
         // Reinitialize your forum JavaScript here
-        loadUsernames().then(() => {
-            // initializeChat();
-        })
+        // loadUsernames().then(() => {
+        //     // initializeChat();
+        // })
 
         initializePosts();
         initializeComments();
@@ -176,23 +183,22 @@ function loadForum() {
 
 }
 
-function loadUsernames() {
-    return fetch('/api/usernames')
-        .then(response => response.json())
-        .then(usernames => {
-            const usersList = document.querySelector('.users-list');
-            usersList.innerHTML = usernames.map(username => `
-                <div data-username="${username}" class="user-list-profile" onclick="initializeChat(event)">
-                    <img src="/static/images/user.png" class="user-icon">
-                    <div>
-                        <p>${username}</p>
-                    </div>
-                </div>
-            `).join('');
-
-        })
-        .catch(error => console.error('Error fetching usernames:', error));
-}
+// function loadUsernames() {
+//     return fetch('/api/usernames')
+//         .then(response => response.json())
+//         .then(usernames => {
+//             const usersList = document.querySelector('.users-list');
+//             usersList.innerHTML = usernames.map(username => `
+//                 <div data-username="${username}" class="user-list-profile" onclick="initializeChat(event)">
+//                     <img src="/static/images/user.png" class="user-icon">
+//                     <div>
+//                         <p>${username}</p>
+//                     </div>
+//                 </div>
+//             `).join('');
+//         })
+//         .catch(error => console.error('Error fetching usernames:', error));
+// }
 
 function loadAges() {
     fetch('/api/get_ages')
@@ -230,6 +236,7 @@ function handleLogin(event) {
     })
     .then(data => {
         if (data.isAuthenticated) {
+            initializeWebSocket()
             loadForum();
         } else {
             const errorMessage = "Invalid login credentials.";

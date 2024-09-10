@@ -65,7 +65,7 @@ function sendMessage() {
     const message = chatInput.value.trim();
     
     if (!message) {
-        console.error("Message is empty.");
+        alert("Message can't empty.");
         return;
     }
     
