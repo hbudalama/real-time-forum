@@ -25,6 +25,7 @@ nav {
 .logo {
     width: 200px;
     padding: 5px;
+    cursor: pointer;
 }
 
 .nav-left,

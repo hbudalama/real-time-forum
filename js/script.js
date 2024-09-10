@@ -17,6 +17,12 @@ document.addEventListener('DOMContentLoaded', function () {
             console.error('There has been a problem with your fetch operation:', error);
             // Optionally display an error message to the user
         });
+
+    document.querySelector('.logo').addEventListener('click', function (event) {
+        event.preventDefault();
+        loadForum();
+        console.log("didn't refresh")
+    })
 });
 
 function loadLoginForm() {
