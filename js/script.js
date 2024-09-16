@@ -1,4 +1,7 @@
 import {initializeWebSocket} from './webSocket.js'
+
+let loggedInUsername = null;
+
 document.addEventListener('DOMContentLoaded', function () {
     fetch('/api/check_session')
         .then(response => {
@@ -9,6 +12,7 @@ document.addEventListener('DOMContentLoaded', function () {
         })
         .then(data => {
             if (data.isAuthenticated) {
+                initializeWebSocket();
                 loadForum();
             } else {
                 loadLoginForm();
@@ -16,7 +20,6 @@ document.addEventListener('DOMContentLoaded', function () {
         })
         .catch(error => {
             console.error('There has been a problem with your fetch operation:', error);
-            // Optionally display an error message to the user
         });
 
     document.querySelector('.logo').addEventListener('click', function (event) {
@@ -40,13 +43,13 @@ function loadLoginForm() {
                     <input type="radio" id="registerBtn" name="btn" value="register">
                     <label for="registerBtn">Register</label>
                 </div>
-                <form id="loginField" class="input-group" action="/api/login" method="post" onsubmit="handleLogin(event)">
+                <form id="loginField" class="input-group" action="/api/login" method="post" onsubmit="window.handleLogin(event)">
                     <div id="loginError" class="error-message"></div>
                     <input type="text" class="input-field" placeholder="Username or Email" name="username" required>
                     <input type="password" class="input-field" placeholder="Password" name="password" required>
                     <button type="submit" class="submit-btn">Log in</button>
                 </form>
-                <form id="registerField" style="display: none;" class="input-group" action="/api/signup" method="post" onsubmit="handleSignup(event)">
+                <form id="registerField" style="display: none;" class="input-group" action="/api/signup" method="post" onsubmit="window.handleSignup(event)">
                     <div id="registerError" class="error-message"></div>
                     <input type="text" class="input-field" placeholder="Username" name="username" required>
                     <input type="text" class="input-field" placeholder="First name" name="firstName" required>
@@ -94,9 +97,9 @@ function loadLoginForm() {
         registerError.style.display = 'none';
     });
 
-    submitBtn.addEventListener('click', () => {
-        handleLogin()
-    });
+    // submitBtn.addEventListener('click', () => {
+    //     handleLogin()
+    // });
 
 }
 
@@ -109,6 +112,7 @@ function loadForum() {
     .then(response => response.json())
     .then(data => {
         if (data.username) {
+            loggedInUsername = data.username;
             const greetingDiv = document.getElementById('greeting');
             greetingDiv.textContent = `Hello, ${data.username}!`;
         }
@@ -214,29 +218,33 @@ function loadAges() {
         });
 }
 
-function handleLogin(event) {
-    event.preventDefault();
-    
+window.handleLogin =  function handleLogin(event) {
+    console.log(event)
+    event.preventDefault()
+
     const formData = new FormData(event.target);
     fetch('/api/login', {
         method: 'POST',
         body: formData,
         credentials: 'include'
     })
-    .then(response => {
+    .then( async response => {
         if (!response.ok) {
-            return response.json().then(errorData => {
-                const errorMessage = errorData.reason || "An unknown error occurred.";
-                console.error('Error:', errorMessage);
-                alert(`Error: ${errorMessage}`);
-                throw new Error(errorMessage);
-            });
+            const  resp = await response.json()
+            throw new Error(resp.reason)
+            // return response.json().then(errorData => {
+            //     const errorMessage = errorData.reason || "An unknown error occurred.";
+            //     console.error('Error:', errorMessage);
+            //     alert(`Error: ${errorMessage}`);
+            //     throw new Error(errorMessage);
+            // });
         }
-        return response.json();
+        return await response.json();
     })
     .then(data => {
+        console.log("we got doata", data)
         if (data.isAuthenticated) {
-            initializeWebSocket()
+            initializeWebSocket();
             loadForum();
         } else {
             const errorMessage = "Invalid login credentials.";
@@ -286,7 +294,7 @@ function validateForm() {
 }
 
 
-function handleSignup(event) {
+window.handleSignup = function handleSignup(event) {
     event.preventDefault();
     
     const formData = new FormData(event.target);

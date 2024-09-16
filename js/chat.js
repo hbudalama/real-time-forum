@@ -1,3 +1,5 @@
+let offset = 0;
+
 function initializeChat(event) {
     const clickedElement = event.currentTarget;
     const username = clickedElement.dataset.username;
@@ -12,14 +14,16 @@ function initializeChat(event) {
     // Open chat UI and display the selected user's information
     openChatWindow(username);
 
+    offset = 0;
+
     // Send a request to the server to get the last 10 messages
     const chatHistoryRequest = {
         Type: 'CHAT_HISTORY',
         Payload: {
-            Sender: 'fatima', // Current user (replace dynamically)
+            Sender: loggedInUsername, // Current user (replace dynamically)
             Recipient: username,
             Limit: 10, // Load the last 10 messages
-            Offset: 0  // No offset initially
+            Offset: offset  // No offset initially
         }
     };
      socket.send(JSON.stringify(chatHistoryRequest));
@@ -49,7 +53,8 @@ function openChatWindow(username) {
         </div>`
     ;
 
-    document.getElementById('chat-messages').addEventListener('scroll', throttle(loadMoreMessages, 500));
+    const chatMessages = document.getElementById('chat-messages');
+    chatMessages.addEventListener('scroll', throttle(loadMoreMessages, 500));
 
     // Set up event listeners for the chat input and send button
     document.getElementById('send-message-button').addEventListener('click', sendMessage);
@@ -65,12 +70,12 @@ function sendMessage() {
     const message = chatInput.value.trim();
     
     if (!message) {
-        alert("Message can't empty.");
+        alert("Message is empty. Please type a message before sending.");
         return;
     }
     
     // Get the sender username from a global state, session, or another variable
-    const sender = 'fatima'; // Replace this with how you're managing the logged-in user
+    const sender = loggedInUsername; // Replace this with how you're managing the logged-in user
 
     // Send the message through WebSocket
     const chatMessage = {
@@ -89,4 +94,60 @@ function sendMessage() {
     } else {
         console.error("WebSocket is not connected.");
     }
+}
+
+function loadMoreMessages() {
+    const chatMessagesDiv = document.getElementById('chat-messages');
+    // Check if the user has scrolled to the top
+    if (chatMessagesDiv.scrollTop === 0) {
+        // Increment the offset to load the next batch of messages
+        offset += 10;
+        const chatHistoryRequest = {
+            Type: 'CHAT_HISTORY',
+            Payload: {
+                Sender: loggedInUsername,
+                Recipient: document.getElementById('user-name-chat').textContent,
+                Limit: 10,
+                Offset: offset
+            }
+        };
+        socket.send(JSON.stringify(chatHistoryRequest));
+    }
+}
+
+// Throttle function to avoid too many requests on scroll
+function throttle(func, limit) {
+    let inThrottle;
+    return function () {
+        const args = arguments;
+        const context = this;
+        if (!inThrottle) {
+            func.apply(context, args);
+            inThrottle = true;
+            setTimeout(() => inThrottle = false, limit);
+        }
+    }
+}
+// Function to append new chat messages
+function appendChatMessage(message) {
+    const chatMessagesDiv = document.getElementById('chat-messages');
+    const messageElement = document.createElement('div');
+    messageElement.className = 'chat-message';
+    messageElement.innerHTML = `<strong>${message.Sender}</strong>: ${message.Content}`;
+    chatMessagesDiv.appendChild(messageElement);
+    // Scroll to the bottom when new messages are added
+    chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+}
+// Function to prepend chat history messages
+function prependChatMessages(messages) {
+    const chatMessagesDiv = document.getElementById('chat-messages');
+    const initialScrollHeight = chatMessagesDiv.scrollHeight;
+    messages.forEach(message => {
+        const messageElement = document.createElement('div');
+        messageElement.className = 'chat-message';
+        messageElement.innerHTML = `<strong>${message.Sender}</strong>: ${message.Content}`;
+        chatMessagesDiv.insertBefore(messageElement, chatMessagesDiv.firstChild);
+    });
+    // Maintain scroll position after prepending messages
+    chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight - initialScrollHeight;
 }

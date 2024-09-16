@@ -1,6 +1,7 @@
-const socket = new WebSocket("ws://localhost:8080/api/ws");
 
 export function initializeWebSocket() {
+    const socket = new WebSocket("ws://localhost:8080/api/ws");
+
     socket.onopen = function(event) {
         console.log("Connected to WebSocket server");
         // socket.send("Hello Server!"); // Send a test message
@@ -40,6 +41,7 @@ export function initializeWebSocket() {
             } else if (message.Type === "CHAT_MESSAGE") {
                 const chatMessage = message.Payload;
                 displayMessage(chatMessage.Sender, chatMessage.Content);
+                console.log(chatMessage)
             } else if (message.Type === "CHAT_HISTORY") {
                 const messages = message.Payload;
     
@@ -85,36 +87,36 @@ function displayMessage(sender, content) {
 
 let offset = 10; // Initial offset for chat messages
 
-function loadMoreMessages() {
-    const chatMessagesDiv = document.getElementById('chat-messages');
+// function loadMoreMessages() {
+//     const chatMessagesDiv = document.getElementById('chat-messages');
 
-    if (chatMessagesDiv.scrollTop === 0) { // Scrolled to top
-        // Send request to load 10 more messages
-        const username = document.getElementById('user-name-chat').textContent;
+//     if (chatMessagesDiv.scrollTop === 0) { // Scrolled to top
+//         // Send request to load 10 more messages
+//         const username = document.getElementById('user-name-chat').textContent;
 
-        const chatHistoryRequest = {
-            Type: 'CHAT_HISTORY',
-            Payload: {
-                Sender: 'fatima', // Current user (replace dynamically)
-                Recipient: username,
-                Limit: 10,
-                Offset: offset // Load the next batch of 10
-            }
-        };
+//         const chatHistoryRequest = {
+//             Type: 'CHAT_HISTORY',
+//             Payload: {
+//                 Sender: 'fatima', // Current user (replace dynamically)
+//                 Recipient: username,
+//                 Limit: 10,
+//                 Offset: offset // Load the next batch of 10
+//             }
+//         };
 
-        socket.send(JSON.stringify(chatHistoryRequest));
-        offset += 10; // Increase offset for the next request
-    }
-}
+//         socket.send(JSON.stringify(chatHistoryRequest));
+//         offset += 10; // Increase offset for the next request
+//     }
+// }
 
-function throttle(func, delay) {
-    let lastCall = 0;
-    return function (...args) {
-        const now = new Date().getTime();
-        if (now - lastCall < delay) {
-            return;
-        }
-        lastCall = now;
-        return func(...args);
-    };
-}
+//  function throttle(func, delay) {
+//     let lastCall = 0;
+//     return function (...args) {
+//         const now = new Date().getTime();
+//         if (now - lastCall < delay) {
+//             return;
+//         }
+//         lastCall = now;
+//         return func(...args);
+//     };
+// }
