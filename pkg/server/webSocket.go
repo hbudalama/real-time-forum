@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"rtf/pkg/db"
+	"rtf/pkg/structs"
 
 	"github.com/gorilla/websocket"
 )
@@ -125,20 +126,11 @@ func Echo(w http.ResponseWriter, r *http.Request) {
 			chatMessageHandler(connection, chatMessage)
 
 		case messageTypeChatHistory:
-			//complete here
-			var historyRequest struct {
-                Sender       string 
-                Recipient    string
-                Limit        int
-                Offset       int
-            }
             if payload, ok := message.Payload.(map[string]interface{}); ok {
-                historyRequest.Sender = payload["Sender"].(string)
-                historyRequest.Recipient = payload["Recipient"].(string)
-                historyRequest.Limit = int(payload["Limit"].(float64))
-                historyRequest.Offset = int(payload["Offset"].(float64))
-            }
-			// chatHistoryHandler(connection, historyRequest)
+                chatHistoryHandler(connection, payload)
+            } else {
+				connection.WriteJSON(Message{Type: messageTypeError, Payload: "Invalid payload for chat history request"})
+			}
 
 		default:
 			connection.WriteJSON(Message{Type: messageTypeUnhandledEvent, Payload: fmt.Sprintf("[%s] is not handled", message.Type)})
@@ -209,6 +201,7 @@ func chatMessageHandler(conn *websocket.Conn, chatMsg ChatMessage) {
 			if err := client.Conn.WriteJSON(Message{Type: messageTypeChatMessage, Payload: chatMsg}); err != nil {
 				log.Printf("Error sending chat message to recipient: %v", err)
 			}
+			break
 		}
 	}
 
@@ -218,11 +211,47 @@ func chatMessageHandler(conn *websocket.Conn, chatMsg ChatMessage) {
 	}
 }
 
-// chatHistoryHandler(conn *websocket.Conn, chatMsg structs.chatMessage) {
-// complete later
-// }
-
-func MessageHandler(message []byte) {
-	fmt.Println("this is message handler: " + string(message))
+func chatHistoryHandler(conn *websocket.Conn, chatRequest map[string]interface{}) {
+	sender, ok := chatRequest["Sender"].(string)
+	if !ok {
+		log.Println("Invalid sender in chat history request")
+		conn.WriteJSON(Message{Type: messageTypeError, Payload: "Invalid sender in chat history request"})
+		return
+	}
+	recipient, ok := chatRequest["Recipient"].(string)
+	if !ok {
+		log.Println("Invalid recipient in chat history request")
+		conn.WriteJSON(Message{Type: messageTypeError, Payload: "Invalid recipient in chat history request"})
+		return
+	}
+	limit, ok := chatRequest["Limit"].(float64) // JSON numbers are parsed as float64
+	if !ok {
+		log.Println("Invalid limit in chat history request")
+		conn.WriteJSON(Message{Type: messageTypeError, Payload: "Invalid limit in chat history request"})
+		return
+	}
+	offset, ok := chatRequest["Offset"].(float64)
+	if !ok {
+		log.Println("Invalid offset in chat history request")
+		conn.WriteJSON(Message{Type: messageTypeError, Payload: "Invalid offset in chat history request"})
+		return
+	}
+	// Fetch chat history from the database
+	messages, err := db.GetChatHistory(sender, recipient, int(limit), int(offset))
+	if err != nil {
+		log.Printf("Error fetching chat history: %v", err)
+		conn.WriteJSON(Message{Type: messageTypeError, Payload: "Failed to fetch chat history"})
+		return
+	}
+	if messages == nil {
+		conn.WriteJSON(Message{Type: messageTypeChatHistory, Payload: []structs.ChatMessage{}})
+		return
+	}
+	// Send the chat history back to the client
+	conn.WriteJSON(Message{Type: messageTypeChatHistory, Payload: messages})
 }
+
+// func MessageHandler(message []byte) {
+// 	fmt.Println("this is message handler: " + string(message))
+// }
 

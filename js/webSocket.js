@@ -1,8 +1,8 @@
 
 export function initializeWebSocket() {
-    const socket = new WebSocket("ws://localhost:8080/api/ws");
+    window.socket = new WebSocket("ws://localhost:8080/api/ws");
 
-    socket.onopen = function(event) {
+    window.socket.onopen = function(event) {
         console.log("Connected to WebSocket server");
         // socket.send("Hello Server!"); // Send a test message
     
@@ -11,7 +11,7 @@ export function initializeWebSocket() {
             Type: "USER_LIST",
             Payload: null
         });
-        socket.send(requestMessage)
+        window.socket.send(requestMessage)
     
         // const requestMessageChat = JSON.stringify({
         //     Type: "CHAT_MESSAGE",
@@ -20,7 +20,7 @@ export function initializeWebSocket() {
         // socket.send(requestMessageChat)
     };
     
-    socket.onmessage = function(event) {
+    window.socket.onmessage = function(event) {
         try {
             const message = JSON.parse(event.data);
     
@@ -30,7 +30,7 @@ export function initializeWebSocket() {
                 // Update the UI with the list of users and their statuses
                 const usersList = document.querySelector('.users-list');
                 usersList.innerHTML = message.Payload.map(user => `
-                    <div data-username="${user.Username}" class="user-list-profile" onclick="initializeChat(event)">
+                    <div data-username="${user.Username}" class="user-list-profile" onclick="window.initializeChat(event)">
                         <img src="/static/images/user.png" class="user-icon">
                         <div>
                             <p>${user.Username}</p>
@@ -61,11 +61,11 @@ export function initializeWebSocket() {
         }
     };
     
-    socket.onclose = function(event) {
+    window.socket.onclose = function(event) {
         console.log("Disconnected from server");
     };
     
-    socket.onerror = function(error) {
+    window.socket.onerror = function(error) {
         console.error("WebSocket error: ", error);
     };
 }
@@ -85,7 +85,7 @@ function displayMessage(sender, content) {
     messageContainer.scrollTop = messageContainer.scrollHeight;
 }
 
-let offset = 10; // Initial offset for chat messages
+//let offset = 10; // Initial offset for chat messages
 
 // function loadMoreMessages() {
 //     const chatMessagesDiv = document.getElementById('chat-messages');

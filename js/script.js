@@ -1,6 +1,6 @@
 import {initializeWebSocket} from './webSocket.js'
 
-let loggedInUsername = null;
+export let loggedInUsername = null;
 
 document.addEventListener('DOMContentLoaded', function () {
     fetch('/api/check_session')
@@ -97,10 +97,6 @@ function loadLoginForm() {
         registerError.style.display = 'none';
     });
 
-    // submitBtn.addEventListener('click', () => {
-    //     handleLogin()
-    // });
-
 }
 
 function loadForum() {
@@ -113,6 +109,7 @@ function loadForum() {
     .then(data => {
         if (data.username) {
             loggedInUsername = data.username;
+            console.log(loggedInUsername);
             const greetingDiv = document.getElementById('greeting');
             greetingDiv.textContent = `Hello, ${data.username}!`;
         }
@@ -171,10 +168,6 @@ function loadForum() {
         `).join('');
 
         document.getElementById('main-content').innerHTML = `<div class="index">${forumHtml}</div>`;
-        // Reinitialize your forum JavaScript here
-        // loadUsernames().then(() => {
-        //     // initializeChat();
-        // })
 
         initializePosts();
         initializeComments();
@@ -186,23 +179,6 @@ function loadForum() {
     });
 
 }
-
-// function loadUsernames() {
-//     return fetch('/api/usernames')
-//         .then(response => response.json())
-//         .then(usernames => {
-//             const usersList = document.querySelector('.users-list');
-//             usersList.innerHTML = usernames.map(username => `
-//                 <div data-username="${username}" class="user-list-profile" onclick="initializeChat(event)">
-//                     <img src="/static/images/user.png" class="user-icon">
-//                     <div>
-//                         <p>${username}</p>
-//                     </div>
-//                 </div>
-//             `).join('');
-//         })
-//         .catch(error => console.error('Error fetching usernames:', error));
-// }
 
 function loadAges() {
     fetch('/api/get_ages')
@@ -232,12 +208,6 @@ window.handleLogin =  function handleLogin(event) {
         if (!response.ok) {
             const  resp = await response.json()
             throw new Error(resp.reason)
-            // return response.json().then(errorData => {
-            //     const errorMessage = errorData.reason || "An unknown error occurred.";
-            //     console.error('Error:', errorMessage);
-            //     alert(`Error: ${errorMessage}`);
-            //     throw new Error(errorMessage);
-            // });
         }
         return await response.json();
     })
@@ -336,3 +306,4 @@ window.handleSignup = function handleSignup(event) {
         // alert(`Error: ${error.message}`);
     });
 }
+

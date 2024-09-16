@@ -1,6 +1,7 @@
+import { loggedInUsername } from './script.js';
 let offset = 0;
 
-function initializeChat(event) {
+window.initializeChat = function initializeChat(event) {
     const clickedElement = event.currentTarget;
     const username = clickedElement.dataset.username;
     
@@ -26,7 +27,13 @@ function initializeChat(event) {
             Offset: offset  // No offset initially
         }
     };
-     socket.send(JSON.stringify(chatHistoryRequest));
+
+     // Make sure the socket is connected before sending
+    if (window.socket) {
+        window.socket.send(JSON.stringify(chatHistoryRequest));
+    } else {
+        console.error("WebSocket is not connected.");
+    }
 }
 
 function openChatWindow(username) {
