@@ -44,101 +44,108 @@ var upgrader = websocket.Upgrader{
 type Client struct {
 	Conn         *websocket.Conn
 	SessionToken string
+	Username     string
 }
 
 var clients []Client
 
-
 func Echo(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("I'm in echo")
-	connection, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Printf("Failed to upgrade to WebSocket: %v", err)
-		return
-	}
+    fmt.Println("I'm in echo")
+    connection, err := upgrader.Upgrade(w, r, nil)
+    if err != nil {
+        log.Printf("Failed to upgrade to WebSocket: %v", err)
+        return
+    }
 
-	// Retrieve session token from the HTTP request (e.g., from cookies)
-	cookie, err := r.Cookie("session_token")
-	if err != nil {
-		log.Printf("No session cookie found")
-		connection.Close()
-		return
-	}
+    // Retrieve session token from the HTTP request (e.g., from cookies)
+    cookie, err := r.Cookie("session_token")
+    if err != nil {
+        log.Printf("No session cookie found")
+        connection.Close()
+        return
+    }
 
-	// Store the connection along with the session token
-	client := Client{
-		Conn:         connection,
-		SessionToken: cookie.Value,
-	}
-	clients = append(clients, client)
+    // Get the username associated with the session token
+    username, err := db.GetUsernameBySessionToken(cookie.Value)
+    if err != nil {
+        log.Printf("Failed to get username by session token: %v", err)
+        connection.Close()
+        return
+    }
 
-	// Send the updated user list to all clients after a new connection
-	userListHandler()
+    // Store the connection along with the session token
+    client := Client{
+        Conn:         connection,
+        SessionToken: cookie.Value,
+    }
+    clients = append(clients, client)
 
-	defer func() {
-		// Remove client from the list upon disconnect
-		for i, c := range clients {
-			if c.Conn == connection {
-				clients = append(clients[:i], clients[i+1:]...)
-				break
-			}
-		}
-		connection.Close()
+    // Send the updated user list to all clients after a new connection
+    userListHandler(username)
 
-		// Send the updated user list to all clients after a disconnection
-		userListHandler()
-	}()
+    defer func() {
+        // Remove client from the list upon disconnect
+        for i, c := range clients {
+            if c.Conn == connection {
+                clients = append(clients[:i], clients[i+1:]...)
+                break
+            }
+        }
+        connection.Close()
 
-	for {
-		_, buffer, err := connection.ReadMessage()
-		if err != nil {
-			log.Printf("Error reading message: %v", err)
-			// Remove the client from the slice on error (disconnection)
-			for i, c := range clients {
-				if c.Conn == connection {
-					clients = append(clients[:i], clients[i+1:]...)
-					break
-				}
-			}
-			break
-		}
+        // Send the updated user list to all clients after a disconnection
+        userListHandler(username)
+    }()
 
-		var message Message
-		if err := json.Unmarshal(buffer, &message); err != nil {
-			log.Printf("WRONG PAYLOAD!!!!: %v", err)
-			connection.WriteJSON(Message{Type: messageTypeError, Payload: "BAD REQUEST!"})
-			continue
-		}
+    for {
+        _, buffer, err := connection.ReadMessage()
+        if err != nil {
+            log.Printf("Error reading message: %v", err)
+            // Remove the client from the slice on error (disconnection)
+            for i, c := range clients {
+                if c.Conn == connection {
+                    clients = append(clients[:i], clients[i+1:]...)
+                    break
+                }
+            }
+            break
+        }
 
-		switch message.Type {
-		case messageTypeUserList:
-			// No need to pass the connection; send the list to all clients
-			userListHandler()
+        var message Message
+        if err := json.Unmarshal(buffer, &message); err != nil {
+            log.Printf("WRONG PAYLOAD!!!!: %v", err)
+            connection.WriteJSON(Message{Type: messageTypeError, Payload: "BAD REQUEST!"})
+            continue
+        }
 
-		case messageTypeChatMessage:
-			// Extract the chat message from the payload
-			var chatMessage ChatMessage
-			if payload, ok := message.Payload.(map[string]interface{}); ok {
-				chatMessage.Sender = payload["Sender"].(string)
-				chatMessage.Recipient = payload["Recipient"].(string)
-				chatMessage.Content = payload["Content"].(string)
-			}
-			chatMessageHandler(connection, chatMessage)
+        switch message.Type {
+        case messageTypeUserList:
+            userListHandler(username)
 
-		case messageTypeChatHistory:
+        case messageTypeChatMessage:
+            // Extract the chat message from the payload
+            var chatMessage ChatMessage
+            if payload, ok := message.Payload.(map[string]interface{}); ok {
+                chatMessage.Sender = payload["Sender"].(string)
+                chatMessage.Recipient = payload["Recipient"].(string)
+                chatMessage.Content = payload["Content"].(string)
+            }
+            chatMessageHandler(connection, chatMessage)
+
+        case messageTypeChatHistory:
             if payload, ok := message.Payload.(map[string]interface{}); ok {
                 chatHistoryHandler(connection, payload)
             } else {
-				connection.WriteJSON(Message{Type: messageTypeError, Payload: "Invalid payload for chat history request"})
-			}
+                connection.WriteJSON(Message{Type: messageTypeError, Payload: "Invalid payload for chat history request"})
+            }
 
-		default:
-			connection.WriteJSON(Message{Type: messageTypeUnhandledEvent, Payload: fmt.Sprintf("[%s] is not handled", message.Type)})
-		}
-	}
+        default:
+            connection.WriteJSON(Message{Type: messageTypeUnhandledEvent, Payload: fmt.Sprintf("[%s] is not handled", message.Type)})
+        }
+    }
 }
 
-func userListHandler() {
+func userListHandler(excludedUsername string) {
 	dbUsers, err := db.GetAllUsernames() // Assuming this returns a slice of usernames
 	if err != nil {
 		log.Printf("Error getting users list: %v", err)
@@ -146,8 +153,12 @@ func userListHandler() {
 	}
 
 	// Creating a list of User structs with their statuses
-	users := make([]Users, len(dbUsers))
-	for i, username := range dbUsers {
+	users := make([]Users, 0)
+	for _, username := range dbUsers {
+		if username == excludedUsername {
+			continue // Skip the logged-in user
+		}
+
 		// Check if the user has a valid session
 		session, err := db.GetSessionByUsername(username)
 		status := "offline" // Default status
@@ -156,15 +167,15 @@ func userListHandler() {
 			status = "online"
 		}
 
-		users[i] = Users{
+		users = append(users, Users{
 			Username: username,
 			Status:   status,
-		}
+		})
 	}
 
 	// Create the message to send to all clients
 	message := Message{
-		Type:    "USER_LIST",
+		Type:    messageTypeUserList,
 		Payload: users,
 	}
 
@@ -189,7 +200,6 @@ func chatMessageHandler(conn *websocket.Conn, chatMsg ChatMessage) {
 
 	// Iterate through all connections and find the recipient
 	for _, client := range clients {
-		// Get session from the token
 		session, err := db.GetSession(client.SessionToken)
 		if err != nil || session == nil {
 			continue
@@ -250,8 +260,3 @@ func chatHistoryHandler(conn *websocket.Conn, chatRequest map[string]interface{}
 	// Send the chat history back to the client
 	conn.WriteJSON(Message{Type: messageTypeChatHistory, Payload: messages})
 }
-
-// func MessageHandler(message []byte) {
-// 	fmt.Println("this is message handler: " + string(message))
-// }
-

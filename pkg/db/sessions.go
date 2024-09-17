@@ -79,3 +79,14 @@ func GetSessionByUsername(username string) (*structs.Session, error) {
 	}
 	return &session, nil
 }
+
+func GetUsernameBySessionToken(sessionToken string) (string, error) {
+    session, err := GetSession(sessionToken)
+    if err != nil {
+        return "", err
+    }
+    if session == nil {
+        return "", fmt.Errorf("invalid session token")
+    }
+    return session.User.Username, nil
+}
