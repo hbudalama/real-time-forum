@@ -17,6 +17,7 @@ const (
 	messageTypeUnhandledEvent = "UNHANDLED_EVENT"
 	messageTypeChatMessage    = "CHAT_MESSAGE"
 	messageTypeChatHistory    = "CHAT_HISTORY"
+	messageTypeNotification   = "NEW_MESSAGE_NOTIFICATION"
 )
 
 type Message struct {
@@ -217,6 +218,38 @@ func userListHandler() {
 	}
 }
 
+// func chatMessageHandler(conn *websocket.Conn, chatMsg ChatMessage) {
+// 	// Save the chat message to the database
+// 	err := db.SaveChatMessage(chatMsg.Sender, chatMsg.Recipient, chatMsg.Content)
+// 	if err != nil {
+// 		log.Printf("Error saving chat message: %v", err)
+// 		conn.WriteJSON(Message{Type: messageTypeError, Payload: "Failed to save message"})
+// 		return
+// 	}
+
+// 	// Iterate through all connections and find the recipient
+// 	for _, client := range clients {
+// 		session, err := db.GetSession(client.SessionToken)
+// 		if err != nil || session == nil {
+// 			continue
+// 		}
+
+// 		// Check if the session username matches the recipient
+// 		if session.User.Username == chatMsg.Recipient {
+// 			// Send the chat message to the recipient
+// 			if err := client.Conn.WriteJSON(Message{Type: messageTypeChatMessage, Payload: chatMsg}); err != nil {
+// 				log.Printf("Error sending chat message to recipient: %v", err)
+// 			}
+// 			break
+// 		}
+// 	}
+
+// 	// Optionally, you can also send a confirmation message back to the sender
+// 	if err := conn.WriteJSON(Message{Type: messageTypeChatMessage, Payload: chatMsg}); err != nil {
+// 		log.Printf("Error sending chat confirmation to sender: %v", err)
+// 	}
+// }
+
 func chatMessageHandler(conn *websocket.Conn, chatMsg ChatMessage) {
 	// Save the chat message to the database
 	err := db.SaveChatMessage(chatMsg.Sender, chatMsg.Recipient, chatMsg.Content)
@@ -239,11 +272,24 @@ func chatMessageHandler(conn *websocket.Conn, chatMsg ChatMessage) {
 			if err := client.Conn.WriteJSON(Message{Type: messageTypeChatMessage, Payload: chatMsg}); err != nil {
 				log.Printf("Error sending chat message to recipient: %v", err)
 			}
+
+			// Send a notification message to the recipient (if needed)
+			notificationMessage := Message{
+				Type: "NEW_MESSAGE_NOTIFICATION",
+				Payload: map[string]string{
+					"Sender":  chatMsg.Sender,
+					"Content": chatMsg.Content,
+				},
+			}
+			if err := client.Conn.WriteJSON(notificationMessage); err != nil {
+				log.Printf("Error sending notification to recipient: %v", err)
+			}
+
 			break
 		}
 	}
 
-	// Optionally, you can also send a confirmation message back to the sender
+	// Optionally, send a confirmation back to the sender
 	if err := conn.WriteJSON(Message{Type: messageTypeChatMessage, Payload: chatMsg}); err != nil {
 		log.Printf("Error sending chat confirmation to sender: %v", err)
 	}

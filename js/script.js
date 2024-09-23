@@ -225,7 +225,7 @@ window.handleLogin =  function handleLogin(event) {
     })
     .catch(error => {
         console.error('Error:', error.message);
-        // alert(`Error: ${error.message}`);
+        alert(`Error: ${error.message}`);
     });
 }
 
