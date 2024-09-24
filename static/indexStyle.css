@@ -507,3 +507,8 @@ button:hover {
     margin-top: 10px;
     margin-left: 10px;
 }
+
+#chat-messages {
+    overflow-y: scroll;
+    height: 180px; /* Adjust as needed */
+}
