@@ -3,6 +3,7 @@ import (
 	"log"
 	"rtf/pkg/structs"
 )
+
 func SaveChatMessage(sender, recipient, content string) error {
 	log.Printf("Saving message from sender: %s to recipient: %s with content: %s", sender, recipient, content)
 	stmt, err := db.Prepare("INSERT INTO Chat (SenderUsername, RecipientUsername, Content) VALUES (?, ?, ?)")

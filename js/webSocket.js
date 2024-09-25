@@ -1,3 +1,4 @@
+
 import { appendChatMessage } from './chat.js';
 import { prependChatMessages } from './chat.js';
 
@@ -35,7 +36,7 @@ export function initializeWebSocket() {
                 `).join('');
             } else if (message.Type === "CHAT_MESSAGE") {
                 const chatMessage = message.Payload;
-                displayMessage(chatMessage.Sender, chatMessage.Content);
+                displayMessage(chatMessage.Sender, chatMessage.Content, chatMessage.CreatedDate);
                 console.log(chatMessage);
             } else if (message.Type === "CHAT_HISTORY") {
                 console.log("Chat history received:", message.Payload);
@@ -69,14 +70,15 @@ export function initializeWebSocket() {
     };
 }
 
-function displayMessage(sender, content) {
+function displayMessage(sender, content, createdDate) {
     const messageContainer = document.getElementById('chat-messages');
     if (!messageContainer) return;
 
      // Create a message object
      const message = {
         Sender: sender,
-        Content: content
+        Content: content,
+        CreatedDate: createdDate
     };
     
     // Use appendChatMessage to add the message

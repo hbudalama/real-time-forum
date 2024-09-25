@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"rtf/pkg/db"
 	"rtf/pkg/structs"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -34,6 +35,7 @@ type ChatMessage struct {
 	Sender    string
 	Recipient string
 	Content   string
+	CreatedDate string
 }
 
 var upgrader = websocket.Upgrader{
@@ -227,6 +229,8 @@ func chatMessageHandler(conn *websocket.Conn, chatMsg ChatMessage) {
 		return
 	}
 
+	
+
 	// Iterate through all connections and find the recipient
 	for _, client := range clients {
 		session, err := db.GetSession(client.SessionToken)
@@ -255,6 +259,17 @@ func chatMessageHandler(conn *websocket.Conn, chatMsg ChatMessage) {
 
 			break }
 	}
+
+	createdDate := time.Now().Format("2006-01-02 15:04:05")
+
+	chatMsg = ChatMessage {
+		Sender: chatMsg.Sender,
+		Recipient: chatMsg.Recipient,
+		Content: chatMsg.Content,
+		CreatedDate: createdDate,
+	}
+
+	// conn.WriteJSON(Message{Type: messageTypeChatMessage, Payload: chatMsg})
 
 	// Optionally, send a confirmation back to the sender
 	if err := conn.WriteJSON(Message{Type: messageTypeChatMessage, Payload: chatMsg}); err != nil {

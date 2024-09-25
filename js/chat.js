@@ -148,14 +148,33 @@ function throttle(func, limit) {
 
 // Function to append new chat messages
 export function appendChatMessage(message) {
-    const chatMessagesDiv = document.getElementById('chat-messages');
+    // const chatMessagesDiv = document.getElementById('chat-messages');
+
+    // const messageElement = document.createElement('div');
+    // messageElement.className = 'chat-message';
+
+    // messageElement.innerHTML = `<strong>${message.Sender}</strong>: ${message.Content}`;
+    // chatMessagesDiv.appendChild(messageElement);
+
+    // // Scroll to the bottom when new messages are added
+    // chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+    const chatBox = document.querySelector('#chat-messages');
+
     const messageElement = document.createElement('div');
-    messageElement.className = 'chat-message';
-    messageElement.innerHTML = `<strong>${message.Sender}</strong>: ${message.Content}`;
-    chatMessagesDiv.appendChild(messageElement);
-    // Scroll to the bottom when new messages are added
-    chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+    messageElement.classList.add('chat-message');
+
+    const date = new Date(message.CreatedDate).toLocaleString(); // Format the date
+
+    messageElement.innerHTML = `
+        <strong>${message.Sender}</strong>
+        <span class="chat-date">(${date})</span>: 
+        <span>${message.Content}</span>
+    `;
+
+    chatBox.appendChild(messageElement);
 }
+
+
 // Function to prepend chat history messages
 export function prependChatMessages(messages) {
     const chatMessagesDiv = document.getElementById('chat-messages');
@@ -164,7 +183,7 @@ export function prependChatMessages(messages) {
     messages.forEach(message => {
         const messageElement = document.createElement('div');
         messageElement.className = 'chat-message';
-        messageElement.innerHTML = `<strong>${message.Sender}</strong>: ${message.Content}`;
+        messageElement.innerHTML = `<strong>${message.Sender} ${message.CreatedDate}</strong>: ${message.Content}`;
         chatMessagesDiv.insertBefore(messageElement, chatMessagesDiv.firstChild);
     });
     // Adjust scroll position to maintain it relative to the loaded messages
