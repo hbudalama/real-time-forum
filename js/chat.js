@@ -1,5 +1,7 @@
 import { loggedInUsername } from './script.js';
 let offset = 0;
+let typingTimeout;
+const typingDelay = 2000; // 2 seconds delay to indicate "stopped typing"
 
 window.initializeChat = function initializeChat(event) {
     const clickedElement = event.currentTarget;
@@ -54,6 +56,7 @@ function openChatWindow(username) {
             <div id="user-info-chat">
                 <img src="/static/images/user.png" id="user-pic" alt="User Picture">
                 <p id="user-name-chat">${username}</p>
+                <p id="typing-status" style="display:none;">is typing...</p>
             </div>
             <div id="chat-messages">
                 <!-- Messages will be displayed here -->
@@ -65,16 +68,11 @@ function openChatWindow(username) {
 
     const chatMessages = document.getElementById('chat-messages');
     chatMessages.addEventListener('scroll', throttle(loadMoreMessages, 500));
-    //console.log("chat message going to throttle:", chatMessages)
-    console.log("scroll event attached to chatMessages div")
 
     // Set up event listeners for the chat input and send button
     document.getElementById('send-message-button').addEventListener('click', sendMessage);
-    document.getElementById('chat-input').addEventListener('keypress', function(event) {
-        if (event.key === 'Enter') {
-            sendMessage();
-        }
-    });
+    document.getElementById('chat-input').addEventListener('keypress', handleTyping);
+     
 }
 
 function sendMessage() {
@@ -188,4 +186,47 @@ export function prependChatMessages(messages) {
     });
     // Adjust scroll position to maintain it relative to the loaded messages
     chatMessagesDiv.scrollTop = initialScrollTop + (chatMessagesDiv.scrollHeight - initialScrollHeight);
+}
+
+function handleTyping(event) {
+    if (event.key === 'Enter') {
+        sendMessage();
+    }
+
+    const typingStatusDiv = document.getElementById('typing-status');
+    if (typingStatusDiv) {
+        typingStatusDiv.style.display = 'block'; // Show typing status
+    }
+
+    // Send typing status to the server
+    sendTypingToRecipient(true);
+
+    // Clear the typing status after the specified delay
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(() => {
+        if (typingStatusDiv) {
+            typingStatusDiv.style.display = 'none'; // Hide typing status
+        }
+        sendTypingToRecipient(false);
+    }, typingDelay);
+}
+
+export function sendTypingToRecipient(isTyping) {
+    const recipient = document.getElementById('user-name-chat').textContent;
+
+     // Check if the recipient is correctly retrieved
+     if (!recipient) {
+        console.error("Recipient is not set! Check the user-name-chat element.");
+        return; // Exit if the recipient is not found
+    }
+    const message = {
+        Type: "TYPING_STATUS",
+        Payload: {
+            Sender: loggedInUsername,
+            Recipient: recipient,
+            IsTyping: isTyping
+        }
+    };
+    window.socket.send(JSON.stringify(message));
+    console.log("Recipient username:", recipient);
 }

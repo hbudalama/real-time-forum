@@ -67,9 +67,12 @@ func IsSessionValid(token string) bool {
 
 func GetSessionByUsername(username string) (*structs.Session, error) {
 	session := structs.Session{}
+	var sessionToken sql.NullString
+	var sessionExpiration sql.NullTime
+
 	dbMutex.Lock()
 	defer dbMutex.Unlock()
-	err := db.QueryRow("SELECT sessionToken, sessionExpiration FROM User WHERE username = ?", username).Scan(&session.Token, &session.Expiry)
+	err := db.QueryRow("SELECT sessionToken, sessionExpiration FROM User WHERE username = ?", username).Scan(&sessionToken, &sessionExpiration)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -77,8 +80,18 @@ func GetSessionByUsername(username string) (*structs.Session, error) {
 		log.Printf("GetSessionByUsername: %s\n", err.Error())
 		return nil, err
 	}
+
+	if sessionToken.Valid {
+		session.Token = sessionToken.String
+	}
+	if sessionExpiration.Valid {
+		session.Expiry = sessionExpiration.Time
+	}
+
 	return &session, nil
 }
+
+
 
 func GetUsernameBySessionToken(sessionToken string) (string, error) {
     session, err := GetSession(sessionToken)

@@ -512,3 +512,14 @@ button:hover {
     overflow-y: scroll;
     height: 180px; /* Adjust as needed */
 }
+
+#typing-status {
+    color: grey;
+    font-style: italic;
+    font-size: 15px;
+    position: relative;
+    z-index: 1000;
+    display: block;
+    margin-left: 10px;
+    animation: 3s;
+}

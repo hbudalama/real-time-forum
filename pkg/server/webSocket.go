@@ -19,6 +19,7 @@ const (
 	messageTypeChatMessage    = "CHAT_MESSAGE"
 	messageTypeChatHistory    = "CHAT_HISTORY"
 	messageTypeNotification   = "NEW_MESSAGE_NOTIFICATION"
+	messageTypeTypingStatus   = "TYPING_STATUS"
 )
 
 type Message struct {
@@ -51,9 +52,10 @@ type Client struct {
 }
 
 var clients []Client
+var typingStatusMap = make(map[string]bool)
+
 
 func Echo(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("I'm in echo")
 	connection, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Printf("Failed to upgrade to WebSocket: %v", err)
@@ -147,21 +149,24 @@ func Echo(w http.ResponseWriter, r *http.Request) {
 				connection.WriteJSON(Message{Type: messageTypeError, Payload: "Invalid payload for chat history request"})
 			}
 
-		case "TYPING_STATUS":
-			// var typingStatus struct {
-			// 	Sender    string `json:"Sender"`
-			// 	Recipient string `json:"Recipient"`
-			// 	IsTyping  bool   `json:"IsTyping"`
-			// }
-
-			// if err := json.Unmarshal(buffer, &typingStatus); err != nil {
-			// 	log.Printf("Error parsing typing status: %v", err)
-			// 	connection.WriteJSON(Message{Type: messageTypeError, Payload: "BAD REQUEST!"})
-			// 	continue
-			// }
-
-			// // Broadcast typing status to the recipient (User B)
-			// broadcastTypingStatus(typingStatus)
+		case messageTypeTypingStatus:
+			// Extract the payload from the message
+            var typingStatus structs.TypingStatus
+            if payload, ok := message.Payload.(map[string]interface{}); ok {
+                // Parse the payload into the TypingStatus struct
+                typingStatus.Sender = payload["Sender"].(string)
+                typingStatus.Recipient = payload["Recipient"].(string)
+                typingStatus.IsTyping = payload["IsTyping"].(bool)
+            } else {
+                log.Printf("Invalid payload for typing status")
+                connection.WriteJSON(Message{Type: messageTypeError, Payload: "Invalid payload for typing status"})
+                continue
+            }
+        
+            fmt.Printf("Typing status: %+v\n", typingStatus)
+        
+            // Broadcast typing status to the recipient (User B)
+            broadcastTypingStatus(typingStatus)
 		default:
 			connection.WriteJSON(Message{Type: messageTypeUnhandledEvent, Payload: fmt.Sprintf("[%s] is not handled", message.Type)})
 		}
@@ -257,7 +262,8 @@ func chatMessageHandler(conn *websocket.Conn, chatMsg ChatMessage) {
 				log.Printf("Error sending notification to recipient: %v", err)
 			}
 
-			break }
+			}
+			break 
 	}
 
 	createdDate := time.Now().Format("2006-01-02 15:04:05")
@@ -316,3 +322,33 @@ func chatHistoryHandler(conn *websocket.Conn, chatRequest map[string]interface{}
 	// Send the chat history back to the client
 	conn.WriteJSON(Message{Type: messageTypeChatHistory, Payload: messages})
 }
+
+func broadcastTypingStatus(typingStatus structs.TypingStatus) {
+    for _, client := range clients {
+        session, err := db.GetSession(client.SessionToken)
+        if err != nil || session == nil {
+            continue
+        }
+        fmt.Printf("Comparing sender: %s with recipient: %s, Equal: %t\n", session.User.Username, typingStatus.Recipient, session.User.Username == typingStatus.Recipient)
+
+        // Check if the recipient is the logged-in user
+        if session.User.Username == typingStatus.Recipient {
+            // Create a message to notify the recipient about the typing status
+            message := Message{
+                Type: "TYPING_STATUS",
+                Payload: map[string]interface{}{
+                    "Sender":    typingStatus.Sender,
+                    "Recipient": typingStatus.Recipient,
+                    "IsTyping":  typingStatus.IsTyping,
+                },
+            }
+            log.Printf("Broadcasting typing status to %s: %+v", typingStatus.Recipient, message) // Debug log
+            if err := client.Conn.WriteJSON(message); err != nil {
+                log.Printf("Error broadcasting typing status: %v", err)
+            }
+            break
+        }
+    }
+}
+
+

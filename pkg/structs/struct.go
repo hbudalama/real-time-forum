@@ -74,3 +74,9 @@ type ChatMessage struct {
 type PageData struct {
 	Ages []int
 }
+
+type TypingStatus struct {
+    Sender    string 
+    Recipient string 
+    IsTyping  bool
+}
