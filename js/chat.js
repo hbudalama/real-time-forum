@@ -1,7 +1,5 @@
 import { loggedInUsername } from './script.js';
 let offset = 0;
-let typingTimeout;
-const typingDelay = 2000; // 2 seconds delay to indicate "stopped typing"
 
 window.initializeChat = function initializeChat(event) {
     const clickedElement = event.currentTarget;
@@ -192,23 +190,8 @@ function handleTyping(event) {
     if (event.key === 'Enter') {
         sendMessage();
     }
-
-    const typingStatusDiv = document.getElementById('typing-status');
-    if (typingStatusDiv) {
-        typingStatusDiv.style.display = 'block'; // Show typing status
-    }
-
     // Send typing status to the server
     sendTypingToRecipient(true);
-
-    // Clear the typing status after the specified delay
-    clearTimeout(typingTimeout);
-    typingTimeout = setTimeout(() => {
-        if (typingStatusDiv) {
-            typingStatusDiv.style.display = 'none'; // Hide typing status
-        }
-        sendTypingToRecipient(false);
-    }, typingDelay);
 }
 
 export function sendTypingToRecipient(isTyping) {
@@ -228,5 +211,6 @@ export function sendTypingToRecipient(isTyping) {
         }
     };
     window.socket.send(JSON.stringify(message));
-    console.log("Recipient username:", recipient);
+    console.log("Recipient username:", message.Payload.Recipient);
+    console.log("sender:", message.Payload.Sender ? message.Payload.Sender : "not there")
 }

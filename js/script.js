@@ -254,14 +254,14 @@ function logoutHandler() {
     .catch(error => console.error('There has been a problem with your fetch operation:', error));
 }
 
-function validateForm() {
-    var checkboxes = document.querySelectorAll('input[name="post-category"]:checked');
-    if (checkboxes.length === 0) {
-        alert("Please select at least one category.");
-        return false;
-    }
-    return true;
-}
+// function validateForm() {
+//     var checkboxes = document.querySelectorAll('input[name="post-category"]:checked');
+//     if (checkboxes.length === 0) {
+//         alert("Please select at least one category.");
+//         return false;
+//     }
+//     return true;
+// }
 
 
 window.handleSignup = function handleSignup(event) {

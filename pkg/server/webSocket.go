@@ -234,8 +234,6 @@ func chatMessageHandler(conn *websocket.Conn, chatMsg ChatMessage) {
 		return
 	}
 
-	
-
 	// Iterate through all connections and find the recipient
 	for _, client := range clients {
 		session, err := db.GetSession(client.SessionToken)

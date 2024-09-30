@@ -56,7 +56,13 @@ function initializePosts() {
                 const form = document.getElementById('create-post-form');
                 form.addEventListener('submit', function (event) {
                     event.preventDefault();
+                    // Call validateForm before submitting
+                      if (!validateForm()) {
+                        return; // If the form is invalid, stop the submission
+                    }
+
                     const formData = new FormData(form);
+
                     fetch('/api/add-post', {
                         method: 'POST',
                         body: formData,
@@ -129,6 +135,15 @@ function loadPosts() {
         `});
         })
         .catch(error => console.error('Error fetching posts:', error));
+}
+
+function validateForm() {
+    var checkboxes = document.querySelectorAll('input[name="post-category"]:checked');
+    if (checkboxes.length === 0) {
+        alert("Please select at least one category.");
+        return false;
+    }
+    return true;
 }
 
 document.addEventListener('DOMContentLoaded', initializePosts);

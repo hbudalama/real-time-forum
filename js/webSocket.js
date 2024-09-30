@@ -1,6 +1,8 @@
 
 import { appendChatMessage,  prependChatMessages } from './chat.js';
-
+import { loggedInUsername } from './script.js';
+let typingTimeout;
+const typingDelay = 2000; // 2 seconds delay to indicate "stopped typing"
 export function initializeWebSocket() {
     const socket = new WebSocket("ws://localhost:8080/api/ws");
     window.socket = socket;
@@ -153,10 +155,19 @@ function handleTypingStatus(payload) {
 
     // Ensure typing status is only shown if the typing sender is the person you're chatting with
     if (payload.Sender === currentChatUser && payload.Recipient === loggedInUsername) {
+        console.log("here")
         if (payload.IsTyping) {
             typingStatusDiv.style.display = 'block'; // Show typing indicator
         } else {
             typingStatusDiv.style.display = 'none'; // Hide typing indicator
         }
+            // Clear the typing status after the specified delay
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(() => {
+        if (typingStatusDiv) {
+            typingStatusDiv.style.display = 'none'; // Hide typing status
+        }
+        // sendTypingToRecipient(false);
+    }, typingDelay);
     }
 }
