@@ -1,8 +1,8 @@
-
 import { appendChatMessage,  prependChatMessages } from './chat.js';
 import { loggedInUsername } from './script.js';
 let typingTimeout;
 const typingDelay = 2000; // 2 seconds delay to indicate "stopped typing"
+
 export function initializeWebSocket() {
     const socket = new WebSocket("ws://localhost:8080/api/ws");
     window.socket = socket;
@@ -41,7 +41,7 @@ function handleMessage(data) {
                 updateUsersList(message.Payload);
                 break;
             case "CHAT_MESSAGE":
-                displayMessage(message.Payload.Sender, message.Payload.Content);
+                displayMessage(message.Payload.Sender, message.Payload.Content, message.Payload.CreatedDate);
                 break;
             case "CHAT_HISTORY":
                 handleChatHistory(message.Payload);
