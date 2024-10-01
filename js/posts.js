@@ -1,20 +1,20 @@
-function initializePosts() {
+import { initializeLikeDislikeButtons } from './likesDislikes.js';
+
+export function initializePosts() {
     const postBtn = document.getElementById('add-post-btn');
     const container = document.getElementById('main-content');
 
     postBtn.addEventListener('click', () => {
-        // Check if the post creation form is already visible
         const existingForm = document.getElementById('create-post-form');
         if (existingForm) {
             console.log('Post creation form is already visible.');
-            return; // Exit if form is already visible
+            return;
         }
 
-        // Fetch the logged-in username
         fetch('/api/get_user_info')
             .then(response => response.json())
             .then(data => {
-                const username = data.username || 'username'; // Fallback to 'username' if no data
+                const username = data.username || 'username';
                 container.innerHTML = ` 
                     <div class="post-container">
                         <div class="user-profile-post">
@@ -52,7 +52,6 @@ function initializePosts() {
                     </div> 
                 `;
 
-                // Handle form submission via fetch
                 const form = document.getElementById('create-post-form');
                 form.addEventListener('submit', function (event) {
                     event.preventDefault();
@@ -71,11 +70,10 @@ function initializePosts() {
                         .then(data => {
                             if (data.success) {
                                 alert('Post created successfully!');
-                                console.log("i have created a post!")
-                                // Hide the form and reload posts
-                                // container.innerHTML = '';
-                                loadPosts(); // Load and display posts dynamically
-
+                                loadPosts(); // Reload posts
+                                
+                                // Re-initialize like and dislike buttons after new posts are loaded
+                                initializeLikeDislikeButtons();
                             } else {
                                 alert('Failed to create post.');
                             }
@@ -87,60 +85,77 @@ function initializePosts() {
     });
 }
 
+
 // Function to load and display posts dynamically
 function loadPosts() {
     const container = document.getElementById('main-content');
-
     fetch('/api/posts')
-        .then(response => response.json())
-        .then(data => {
-            container.innerHTML = ''; // Clear existing posts
-
-            console.log('data1',data)
-            data.forEach(post => {
-                container.innerHTML += `
-                    <div class="post" id="post-${post.ID}">
-                <div class="post-row">
-                    <div class="user-profile">
-                        <img src="/static/images/user.png">
-                        <div>
-                            <p>${post.Username}</p>
-                        </div>
-                    </div>
-                </div>
-                <a href="javascript:void(0)" class="post-title-link" data-id="${post.ID}">
-                    <div>
-                        <h2>${post.Title}</h2>
-                        <h4>Category: ${post.Category}</h4>
-                    </div>
-                </a>
-                <div class="post-row">
-                    <div class="activity-icons">
-                        <div class="like-button" data-id="${post.ID}">
-                            <i class="fa fa-thumbs-up icon"></i>${post.Likes}
-                        </div>
-                        <div class="dislike-button" data-id="${post.ID}">
-                            <i class="fa fa-thumbs-down icon"></i>${post.Dislikes}
-                        </div>
-                        <div>
-                            <a href="javascript:void(0)" class="comment-icon" data-id="${post.ID}">
-                                <i class="fa fa-comment icon"></i>
-                                <span id="post-${post.ID}-comments-count">${post.Comments}</span>
-                            </a>
-                        </div>
-                    </div>
-                    <div class="post-profile-icon"></div>
-                </div>
-            </div>
-        `
-        const postDiv = document.getElementById(`post-${post.ID}`)
-        
-        const like = postDiv?.querySelector('.like-button')
-        const dislike = postDiv?.querySelector('.dislike-button')
-
-    });
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status} ${response.statusText}`);
+            }
+            return response.json();
         })
-        .catch(error => console.error('Error fetching posts:', error));
+        .then(posts => {
+            console.log('Posts data:', posts);
+
+            if (!Array.isArray(posts)) {
+                console.error('Expected an array of posts but received:', posts);
+                return;
+            }
+
+            if (posts.length === 0) {
+                console.log('No posts made.');
+                return;
+            }
+
+            const forumHtml = posts.map(post => `
+                <div class="post">
+                    <div class="post-row">
+                        <div class="user-profile">
+                            <img src="/static/images/user.png">
+                            <div>
+                                <p>${post.Username}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="javascript:void(0)" class="post-title-link" data-id="${post.ID}">
+                        <div>
+                            <h2>${post.Title}</h2>
+                            <h4>Category: ${post.Category}</h4>
+                        </div>
+                    </a>
+                    <div class="post-row">
+                        <div class="activity-icons">
+                            <div class="like-button" data-id="${post.ID}">
+                                <i class="fa fa-thumbs-up icon"></i>${post.Likes}
+                            </div>
+                            <div class="dislike-button" data-id="${post.ID}">
+                                <i class="fa fa-thumbs-down icon"></i>${post.Dislikes}
+                            </div>
+                            <div>
+                                <a href="javascript:void(0)" class="comment-icon" data-id="${post.ID}">
+                                    <i class="fa fa-comment icon"></i>
+                                    <span id="post-${post.ID}-comments-count">${post.Comments}</span>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="post-profile-icon"></div>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('main-content').innerHTML = `<div class="index">${forumHtml}</div>`;
+
+            initializePosts();
+            initializeComments();
+            initializeLikeDislikeButtons();
+            
+            
+        })
+        .catch(error => {
+            console.error('There has been a problem with your fetch operation:', error);
+        });
 }
 
 function validateForm() {
@@ -152,4 +167,5 @@ function validateForm() {
     return true;
 }
 
-document.addEventListener('DOMContentLoaded', initializePosts);
+// document.addEventListener
+//document.addEventListener('DOMContentLoaded', initializePosts);

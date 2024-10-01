@@ -1,4 +1,4 @@
-function initializeLikeDislikeButtons() {
+export function initializeLikeDislikeButtons() {
     document.querySelectorAll('.like-button').forEach(button => {
         button.addEventListener('click', (event) => {
             console.log("you liked!!", event);

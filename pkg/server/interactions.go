@@ -108,48 +108,48 @@ func CommentsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func AddLikesHandler(w http.ResponseWriter, r *http.Request) {
-    cookie, err := r.Cookie("session_token")
-    if err != nil {
-        http.Redirect(w, r, "/login", http.StatusFound)
-        return
-    }
-    postIDStr := r.PathValue("id")
+	cookie, err := r.Cookie("session_token")
+	if err != nil {
+		http.Redirect(w, r, "/login", http.StatusFound)
+		return
+	}
+	postIDStr := r.PathValue("id")
 
-    postID, err := strconv.Atoi(postIDStr)
-    if err != nil {
-        http.Error(w, "Invalid post ID", http.StatusBadRequest)
-        return
-    }
+	postID, err := strconv.Atoi(postIDStr)
+	if err != nil {
+		http.Error(w, "Invalid post ID", http.StatusBadRequest)
+		return
+	}
 
-    var user structs.User
-    cookie, err = r.Cookie("session_token")
-    if err != nil {
-        log.Printf("can't get the cookie: %s\n", err.Error())
-        return
-    }
+	var user structs.User
+	cookie, err = r.Cookie("session_token")
+	if err != nil {
+		log.Printf("can't get the cookie: %s\n", err.Error())
+		return
+	}
 
-    token := cookie.Value
+	token := cookie.Value
 
-    session, err := db.GetSession(token)
-    if err != nil {
-        log.Printf("can't get the session: %s\n", err.Error())
-        return
-    }
-    user = session.User
+	session, err := db.GetSession(token)
+	if err != nil {
+		log.Printf("can't get the session: %s\n", err.Error())
+		return
+	}
+	user = session.User
 
-    err = db.InsertOrUpdateInteraction(postID, user.Username, 1)
-    if err != nil {
-        http.Error(w, "Unable to like post", http.StatusInternalServerError)
-        return
-    }
+	err = db.InsertOrUpdateInteraction(postID, user.Username, 1)
+	if err != nil {
+		http.Error(w, "Unable to like post", http.StatusInternalServerError)
+		return
+	}
 
-    likes, dislikes, err := db.GetPostInteractions(postID) // here
+	likes, dislikes, err := db.GetPostInteractions(postID) // here
     if err != nil {
         http.Error(w, "Unable to retrieve post interactions", http.StatusInternalServerError)
         return
     }
 
-    w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json")
     response := map[string]interface{}{
         "success":  true,
         "likes":    likes,

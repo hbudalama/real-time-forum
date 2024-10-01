@@ -1,4 +1,6 @@
 import {initializeWebSocket} from './webSocket.js'
+import { initializePosts } from './posts.js';
+import { initializeLikeDislikeButtons } from './likesDislikes.js';
 
 export let loggedInUsername = null;
 
