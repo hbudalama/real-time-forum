@@ -156,48 +156,51 @@ func GetPostDetails(postId int) (structs.Post, structs.User, []structs.Comment, 
 }
 
 func InsertOrUpdateInteraction(postID int, username string, kind int) error {
-	var existingKind int
-	err := db.QueryRow("SELECT Kind FROM Interaction WHERE PostID = ? AND Username = ?", postID, username).Scan(&existingKind)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			// No existing interaction, insert a new one
-			_, err = db.Exec(
-				"INSERT INTO Interaction (PostID, Username, Kind) VALUES (?, ?, ?)",
-				postID, username, kind,
-			)
-			if err != nil {
-				log.Printf("InsertInteraction error: %s", err)
-				return err
-			}
-		} else {
-			// Some other error occurred
-			log.Printf("Query error: %s", err)
-			return err
-		}
-	} else { //if no errors
-		// Existing interaction found, update it if necessary
-		if existingKind != kind {
-			_, err = db.Exec(
-				"UPDATE Interaction SET Kind = ? WHERE PostID = ? AND Username = ?",
-				kind, postID, username,
-			)
-			if err != nil {
-				log.Printf("UpdateInteraction error: %s", err)
-				return err
-			}
-		} else {
-			//if the interaction is the same
-			_, err = db.Exec(
-				"DELETE FROM Interaction WHERE PostID = ? AND Username = ?",
-				postID, username,
-			)
-			if err != nil {
-				log.Printf("UpdateInteraction error: %s", err)
-				return err
-			}
-		}
-	}
-	return nil
+    if kind != 0 && kind != 1 {
+        return errors.New("invalid interaction kind")
+    }
+    var existingKind int
+    err := db.QueryRow("SELECT Kind FROM Interaction WHERE PostID = ? AND Username = ?", postID, username).Scan(&existingKind)
+    if err != nil {
+        if err == sql.ErrNoRows {
+            // No existing interaction, insert a new one
+            _, err = db.Exec(
+                "INSERT INTO Interaction (PostID, Username, Kind) VALUES (?, ?, ?)",
+                postID, username, kind,
+            )
+            if err != nil {
+                log.Printf("Interaction error: %s", err)
+                return err
+            }
+        } else {
+            // Some other error occurred
+            log.Printf("Query error: %s", err)
+            return err
+        }
+    } else {
+        // Existing interaction found, update it if necessary
+        if existingKind != kind {
+            _, err = db.Exec(
+                "UPDATE Interaction SET Kind = ? WHERE PostID = ? AND Username = ?",
+                kind, postID, username,
+            )
+            if err != nil {
+                log.Printf("UpdateCommentInteraction error: %s", err)
+                return err
+            }
+        } else {
+            // If the interaction is the same, delete it
+            _, err = db.Exec(
+                "DELETE FROM Interaction WHERE PostID = ? AND Username = ?",
+                postID, username,
+            )
+            if err != nil {
+                log.Printf("DeleteInteraction error: %s", err)
+                return err
+            }
+        }
+    }
+    return nil
 }
 
 // GetNewestPosts retrieves posts ordered by creation date (newest first)
@@ -310,17 +313,14 @@ func AddPostCategories(postID int, categories []string) error {
 	return nil
 }
 
-func GetPostInteractions(postID int) (int, int, error) {
-	var likes, dislikes int
-	err := db.QueryRow(`
-        SELECT 
-            SUM(CASE WHEN Kind = 1 THEN 1 ELSE 0 END) AS Likes,
-            SUM(CASE WHEN Kind = 0 THEN 1 ELSE 0 END) AS Dislikes
-        FROM Interaction
-        WHERE PostID = ?
-    `, postID).Scan(&likes, &dislikes)
-	if err != nil {
-		return 0, 0, err
-	}
-	return likes, dislikes, nil
+func GetPostInteractions(postID int) (likes int, dislikes int, err error) {
+    err = db.QueryRow("SELECT COUNT() FROM Interaction WHERE PostID = $1 AND Kind = 1", postID).Scan(&likes)
+    if err != nil {
+        return 0, 0, err
+    }
+    err = db.QueryRow("SELECT COUNT() FROM Interaction WHERE PostID = $1 AND Kind = 0", postID).Scan(&dislikes)
+    if err != nil {
+        return 0, 0, err
+    }
+    return likes, dislikes, nil
 }

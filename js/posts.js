@@ -99,7 +99,7 @@ function loadPosts() {
             console.log('data1',data)
             data.forEach(post => {
                 container.innerHTML += `
-                    <div class="post">
+                    <div class="post" id="post-${post.ID}">
                 <div class="post-row">
                     <div class="user-profile">
                         <img src="/static/images/user.png">
@@ -132,7 +132,13 @@ function loadPosts() {
                     <div class="post-profile-icon"></div>
                 </div>
             </div>
-        `});
+        `
+        const postDiv = document.getElementById(`post-${post.ID}`)
+        
+        const like = postDiv?.querySelector('.like-button')
+        const dislike = postDiv?.querySelector('.dislike-button')
+
+    });
         })
         .catch(error => console.error('Error fetching posts:', error));
 }

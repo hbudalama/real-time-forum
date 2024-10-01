@@ -108,58 +108,54 @@ func CommentsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func AddLikesHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("i'm in like")
+    cookie, err := r.Cookie("session_token")
+    if err != nil {
+        http.Redirect(w, r, "/login", http.StatusFound)
+        return
+    }
+    postIDStr := r.PathValue("id")
 
-	if !LoginGuard(w, r) {
-		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
-		return
-	}
+    postID, err := strconv.Atoi(postIDStr)
+    if err != nil {
+        http.Error(w, "Invalid post ID", http.StatusBadRequest)
+        return
+    }
 
-	postIDStr := r.PathValue("id")
-	fmt.Printf("postIDStr: %s\n", postIDStr)
-	postID, err := strconv.Atoi(postIDStr)
-	if err != nil {
-		Error400Handler(w, r, "invalid post ID")
-		return
-	}
+    var user structs.User
+    cookie, err = r.Cookie("session_token")
+    if err != nil {
+        log.Printf("can't get the cookie: %s\n", err.Error())
+        return
+    }
 
-	cookie, err := r.Cookie("session_token")
-	if err != nil {
-		log.Printf("can't get the cookie: %s\n", err.Error())
-		Error500Handler(w, r)
-		return
-	}
+    token := cookie.Value
 
-	token := cookie.Value
-	session, err := db.GetSession(token)
-	if err != nil {
-		log.Printf("can't get the session: %s\n", err.Error())
-		Error500Handler(w, r)
-		return
-	}
-	username := session.User.Username
+    session, err := db.GetSession(token)
+    if err != nil {
+        log.Printf("can't get the session: %s\n", err.Error())
+        return
+    }
+    user = session.User
 
-	err = db.InsertOrUpdateInteraction(postID, username, 1)
-	if err != nil {
-		Error500Handler(w, r)
-		return
-	}
+    err = db.InsertOrUpdateInteraction(postID, user.Username, 1)
+    if err != nil {
+        http.Error(w, "Unable to like post", http.StatusInternalServerError)
+        return
+    }
 
-	// Get the updated like count after the operation
-	likes, dislikes, err := db.GetPostInteractions(postID)
-	if err != nil {
-		Error500Handler(w, r)
-		return
-	}
+    likes, dislikes, err := db.GetPostInteractions(postID) // here
+    if err != nil {
+        http.Error(w, "Unable to retrieve post interactions", http.StatusInternalServerError)
+        return
+    }
 
-	// Respond with JSON
-	w.Header().Set("Content-Type", "application/json")
-	response := map[string]interface{}{
-		"success":  true,
-		"likes":    likes,
-		"dislikes": dislikes,
-	}
-	json.NewEncoder(w).Encode(response)
+    w.Header().Set("Content-Type", "application/json")
+    response := map[string]interface{}{
+        "success":  true,
+        "likes":    likes,
+        "dislikes": dislikes,
+    }
+    json.NewEncoder(w).Encode(response)
 }
 
 func AddDislikesHandler(w http.ResponseWriter, r *http.Request) {
