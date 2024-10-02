@@ -33,10 +33,16 @@ type Users struct {
 }
 
 type ChatMessage struct {
-	Sender    string
-	Recipient string
-	Content   string
+	Sender      string
+	Recipient   string
+	Content     string
 	CreatedDate string
+}
+
+type LastMessage struct {
+	Sender    string    // The sender of the last message
+	Content   string    // Content of the last message
+	Timestamp time.Time // When the last message was sent
 }
 
 var upgrader = websocket.Upgrader{
@@ -53,7 +59,7 @@ type Client struct {
 
 var clients []Client
 var typingStatusMap = make(map[string]bool)
-
+var lastMessages = make(map[string]LastMessage) // Map of Username to LastMessage
 
 func Echo(w http.ResponseWriter, r *http.Request) {
 	connection, err := upgrader.Upgrade(w, r, nil)
@@ -151,22 +157,22 @@ func Echo(w http.ResponseWriter, r *http.Request) {
 
 		case messageTypeTypingStatus:
 			// Extract the payload from the message
-            var typingStatus structs.TypingStatus
-            if payload, ok := message.Payload.(map[string]interface{}); ok {
-                // Parse the payload into the TypingStatus struct
-                typingStatus.Sender = payload["Sender"].(string)
-                typingStatus.Recipient = payload["Recipient"].(string)
-                typingStatus.IsTyping = payload["IsTyping"].(bool)
-            } else {
-                log.Printf("Invalid payload for typing status")
-                connection.WriteJSON(Message{Type: messageTypeError, Payload: "Invalid payload for typing status"})
-                continue
-            }
-        
-            fmt.Printf("Typing status: %+v\n", typingStatus)
-        
-            // Broadcast typing status to the recipient (User B)
-            broadcastTypingStatus(typingStatus)
+			var typingStatus structs.TypingStatus
+			if payload, ok := message.Payload.(map[string]interface{}); ok {
+				// Parse the payload into the TypingStatus struct
+				typingStatus.Sender = payload["Sender"].(string)
+				typingStatus.Recipient = payload["Recipient"].(string)
+				typingStatus.IsTyping = payload["IsTyping"].(bool)
+			} else {
+				log.Printf("Invalid payload for typing status")
+				connection.WriteJSON(Message{Type: messageTypeError, Payload: "Invalid payload for typing status"})
+				continue
+			}
+
+			fmt.Printf("Typing status: %+v\n", typingStatus)
+
+			// Broadcast typing status to the recipient (User B)
+			broadcastTypingStatus(typingStatus)
 		default:
 			connection.WriteJSON(Message{Type: messageTypeUnhandledEvent, Payload: fmt.Sprintf("[%s] is not handled", message.Type)})
 		}
@@ -225,6 +231,64 @@ func userListHandler() {
 	}
 }
 
+// func chatMessageHandler(conn *websocket.Conn, chatMsg ChatMessage) {
+// 	// Save the chat message to the database
+// 	err := db.SaveChatMessage(chatMsg.Sender, chatMsg.Recipient, chatMsg.Content)
+// 	if err != nil {
+// 		log.Printf("Error saving chat message: %v", err)
+// 		conn.WriteJSON(Message{Type: messageTypeError, Payload: "Failed to save message"})
+// 		return
+// 	}
+
+// 	fmt.Printf("Sending from %s to %s\n", chatMsg.Sender, chatMsg.Recipient)
+
+// 	// Iterate through all connections and find the recipient
+// 	for _, client := range clients {
+// 		session, err := db.GetSession(client.SessionToken)
+// 		if err != nil || session == nil {
+// 			continue
+// 		}
+// 		log.Printf("session: %s, recpient: %s\n", session.User.Username, chatMsg.Recipient)
+// 		// Check if the session username matches the recipient
+// 		if session.User.Username == chatMsg.Recipient {
+// 			log.Println("Sending....")
+// 			// Send the chat message to the recipient
+// 			if err := client.Conn.WriteJSON(Message{Type: messageTypeChatMessage, Payload: chatMsg}); err != nil {
+// 				log.Printf("Error sending chat message to recipient: %v", err)
+// 			}
+
+// 			// Send a notification message to the recipient (if needed)
+// 			notificationMessage := Message{
+// 				Type: "NEW_MESSAGE_NOTIFICATION",
+// 				Payload: map[string]string{
+// 					"Sender":  chatMsg.Sender,
+// 					"Content": chatMsg.Content,
+// 				},
+// 			}
+// 			if err := client.Conn.WriteJSON(notificationMessage); err != nil {
+// 				log.Printf("Error sending notification to recipient: %v", err)
+// 			}
+// 		}
+// 		break
+// 	}
+
+// 	createdDate := time.Now().Format("2006-01-02 15:04:05")
+
+// 	chatMsg = ChatMessage{
+// 		Sender:      chatMsg.Sender,
+// 		Recipient:   chatMsg.Recipient,
+// 		Content:     chatMsg.Content,
+// 		CreatedDate: createdDate,
+// 	}
+
+// 	// conn.WriteJSON(Message{Type: messageTypeChatMessage, Payload: chatMsg})
+
+// 	// Optionally, send a confirmation back to the sender
+// 	if err := conn.WriteJSON(Message{Type: messageTypeChatMessage, Payload: chatMsg}); err != nil {
+// 		log.Printf("Error sending chat confirmation to sender: %v", err)
+// 	}
+// }
+
 func chatMessageHandler(conn *websocket.Conn, chatMsg ChatMessage) {
 	// Save the chat message to the database
 	err := db.SaveChatMessage(chatMsg.Sender, chatMsg.Recipient, chatMsg.Content)
@@ -234,23 +298,27 @@ func chatMessageHandler(conn *websocket.Conn, chatMsg ChatMessage) {
 		return
 	}
 
-	// Iterate through all connections and find the recipient
+	fmt.Printf("Sending from %s to %s\n", chatMsg.Sender, chatMsg.Recipient)
+
+	// Iterate through all connections and find both the recipient and the sender
 	for _, client := range clients {
 		session, err := db.GetSession(client.SessionToken)
 		if err != nil || session == nil {
 			continue
 		}
 
-		// Check if the session username matches the recipient
+		// Notify the recipient
 		if session.User.Username == chatMsg.Recipient {
+			log.Println("Sending message to recipient...")
+
 			// Send the chat message to the recipient
 			if err := client.Conn.WriteJSON(Message{Type: messageTypeChatMessage, Payload: chatMsg}); err != nil {
 				log.Printf("Error sending chat message to recipient: %v", err)
 			}
 
-			// Send a notification message to the recipient (if needed)
+			// Send a notification to the recipient
 			notificationMessage := Message{
-				Type: "NEW_MESSAGE_NOTIFICATION",
+				Type: messageTypeNotification,
 				Payload: map[string]string{
 					"Sender":  chatMsg.Sender,
 					"Content": chatMsg.Content,
@@ -259,25 +327,27 @@ func chatMessageHandler(conn *websocket.Conn, chatMsg ChatMessage) {
 			if err := client.Conn.WriteJSON(notificationMessage); err != nil {
 				log.Printf("Error sending notification to recipient: %v", err)
 			}
+		}
 
+		// Optionally, notify the sender (if required)
+		if session.User.Username == chatMsg.Sender {
+			log.Println("Sending confirmation to sender...")
+
+			// Send a confirmation back to the sender
+			if err := conn.WriteJSON(Message{Type: messageTypeChatMessage, Payload: chatMsg}); err != nil {
+				log.Printf("Error sending chat confirmation to sender: %v", err)
 			}
-			break 
+		}
 	}
 
-	createdDate := time.Now().Format("2006-01-02 15:04:05")
+	// Update the last message timestamp
+	createdDate := time.Now().Format(time.RFC3339)
 
-	chatMsg = ChatMessage {
-		Sender: chatMsg.Sender,
-		Recipient: chatMsg.Recipient,
-		Content: chatMsg.Content,
+	chatMsg = ChatMessage{
+		Sender:      chatMsg.Sender,
+		Recipient:   chatMsg.Recipient,
+		Content:     chatMsg.Content,
 		CreatedDate: createdDate,
-	}
-
-	// conn.WriteJSON(Message{Type: messageTypeChatMessage, Payload: chatMsg})
-
-	// Optionally, send a confirmation back to the sender
-	if err := conn.WriteJSON(Message{Type: messageTypeChatMessage, Payload: chatMsg}); err != nil {
-		log.Printf("Error sending chat confirmation to sender: %v", err)
 	}
 }
 
@@ -322,31 +392,29 @@ func chatHistoryHandler(conn *websocket.Conn, chatRequest map[string]interface{}
 }
 
 func broadcastTypingStatus(typingStatus structs.TypingStatus) {
-    for _, client := range clients {
-        session, err := db.GetSession(client.SessionToken)
-        if err != nil || session == nil {
-            continue
-        }
-        fmt.Printf("Comparing sender: %s with recipient: %s, Equal: %t\n", session.User.Username, typingStatus.Recipient, session.User.Username == typingStatus.Recipient)
+	for _, client := range clients {
+		session, err := db.GetSession(client.SessionToken)
+		if err != nil || session == nil {
+			continue
+		}
+		fmt.Printf("Comparing sender: %s with recipient: %s, Equal: %t\n", session.User.Username, typingStatus.Recipient, session.User.Username == typingStatus.Recipient)
 
-        // Check if the recipient is the logged-in user
-        if session.User.Username == typingStatus.Recipient {
-            // Create a message to notify the recipient about the typing status
-            message := Message{
-                Type: "TYPING_STATUS",
-                Payload: map[string]interface{}{
-                    "Sender":    typingStatus.Sender,
-                    "Recipient": typingStatus.Recipient,
-                    "IsTyping":  typingStatus.IsTyping,
-                },
-            }
-            log.Printf("Broadcasting typing status to %s: %+v", typingStatus.Recipient, message) // Debug log
-            if err := client.Conn.WriteJSON(message); err != nil {
-                log.Printf("Error broadcasting typing status: %v", err)
-            }
-            break
-        }
-    }
+		// Check if the recipient is the logged-in user
+		if session.User.Username == typingStatus.Recipient {
+			// Create a message to notify the recipient about the typing status
+			message := Message{
+				Type: "TYPING_STATUS",
+				Payload: map[string]interface{}{
+					"Sender":    typingStatus.Sender,
+					"Recipient": typingStatus.Recipient,
+					"IsTyping":  typingStatus.IsTyping,
+				},
+			}
+			log.Printf("Broadcasting typing status to %s: %+v", typingStatus.Recipient, message) // Debug log
+			if err := client.Conn.WriteJSON(message); err != nil {
+				log.Printf("Error broadcasting typing status: %v", err)
+			}
+			break
+		}
+	}
 }
-
-
