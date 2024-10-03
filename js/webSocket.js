@@ -17,7 +17,7 @@ export function initializeWebSocket() {
     };
     
     window.socket.onclose = function(event) {
-        console.log("Disconnected from server");
+        console.log("Disconnected from server", event.code, event.reason);
     };
     
     window.socket.onerror = function(error) {

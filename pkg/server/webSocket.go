@@ -55,11 +55,13 @@ type Client struct {
 	Conn         *websocket.Conn
 	SessionToken string
 	Username     string
+	IsOnline     bool // Track if the user is currently online
 }
 
 var clients []Client
-var typingStatusMap = make(map[string]bool)
-var lastMessages = make(map[string]LastMessage) // Map of Username to LastMessage
+
+// var typingStatusMap = make(map[string]bool)
+// var lastMessages = make(map[string]LastMessage) // Map of Username to LastMessage
 
 func Echo(w http.ResponseWriter, r *http.Request) {
 	connection, err := upgrader.Upgrade(w, r, nil)
@@ -92,6 +94,7 @@ func Echo(w http.ResponseWriter, r *http.Request) {
 		Conn:         connection,
 		SessionToken: cookie.Value,
 		Username:     loggedInUsername,
+		IsOnline:     true, // Set status to online when connected
 	}
 	clients = append(clients, client)
 
@@ -102,14 +105,16 @@ func Echo(w http.ResponseWriter, r *http.Request) {
 		// Remove the client from the list upon disconnect
 		for i, c := range clients {
 			if c.Conn == connection {
-				clients = append(clients[:i], clients[i+1:]...)
+				// clients = append(clients[:i], clients[i+1:]...)
+				clients[i].IsOnline = false
 				break
 			}
 		}
-		connection.Close()
 
 		// Send the updated user list to all clients after a disconnection
 		userListHandler()
+
+		connection.Close()
 	}()
 
 	for {
@@ -186,7 +191,17 @@ func userListHandler() {
 		return
 	}
 
-	// Create a message for each client with their personalized user list
+	// Create a map to track online status
+	onlineStatus := make(map[string]bool)
+
+	// Mark users as online based on active WebSocket connections
+	for _, client := range clients {
+		if client.IsOnline {
+			onlineStatus[client.Username] = true
+		}
+	}
+
+	// Send the user list to all clients
 	for _, client := range clients {
 		// Get the session associated with the client
 		session, err := db.GetSession(client.SessionToken)
@@ -205,10 +220,16 @@ func userListHandler() {
 			}
 
 			// Check if the user has a valid session
-			session, err := db.GetSessionByUsername(username)
-			status := "offline" // Default status
+			// session, err := db.GetSessionByUsername(username)
+			// status := "offline" // Default status
 
-			if err == nil && session != nil && db.IsSessionValid(session.Token) {
+			// if err == nil && session != nil && db.IsSessionValid(session.Token) {
+			// 	status = "online"
+			// }
+
+			// Determine the user's status based on the onlineStatus map
+			status := "offline"
+			if onlineStatus[username] {
 				status = "online"
 			}
 
@@ -230,64 +251,6 @@ func userListHandler() {
 		}
 	}
 }
-
-// func chatMessageHandler(conn *websocket.Conn, chatMsg ChatMessage) {
-// 	// Save the chat message to the database
-// 	err := db.SaveChatMessage(chatMsg.Sender, chatMsg.Recipient, chatMsg.Content)
-// 	if err != nil {
-// 		log.Printf("Error saving chat message: %v", err)
-// 		conn.WriteJSON(Message{Type: messageTypeError, Payload: "Failed to save message"})
-// 		return
-// 	}
-
-// 	fmt.Printf("Sending from %s to %s\n", chatMsg.Sender, chatMsg.Recipient)
-
-// 	// Iterate through all connections and find the recipient
-// 	for _, client := range clients {
-// 		session, err := db.GetSession(client.SessionToken)
-// 		if err != nil || session == nil {
-// 			continue
-// 		}
-// 		log.Printf("session: %s, recpient: %s\n", session.User.Username, chatMsg.Recipient)
-// 		// Check if the session username matches the recipient
-// 		if session.User.Username == chatMsg.Recipient {
-// 			log.Println("Sending....")
-// 			// Send the chat message to the recipient
-// 			if err := client.Conn.WriteJSON(Message{Type: messageTypeChatMessage, Payload: chatMsg}); err != nil {
-// 				log.Printf("Error sending chat message to recipient: %v", err)
-// 			}
-
-// 			// Send a notification message to the recipient (if needed)
-// 			notificationMessage := Message{
-// 				Type: "NEW_MESSAGE_NOTIFICATION",
-// 				Payload: map[string]string{
-// 					"Sender":  chatMsg.Sender,
-// 					"Content": chatMsg.Content,
-// 				},
-// 			}
-// 			if err := client.Conn.WriteJSON(notificationMessage); err != nil {
-// 				log.Printf("Error sending notification to recipient: %v", err)
-// 			}
-// 		}
-// 		break
-// 	}
-
-// 	createdDate := time.Now().Format("2006-01-02 15:04:05")
-
-// 	chatMsg = ChatMessage{
-// 		Sender:      chatMsg.Sender,
-// 		Recipient:   chatMsg.Recipient,
-// 		Content:     chatMsg.Content,
-// 		CreatedDate: createdDate,
-// 	}
-
-// 	// conn.WriteJSON(Message{Type: messageTypeChatMessage, Payload: chatMsg})
-
-// 	// Optionally, send a confirmation back to the sender
-// 	if err := conn.WriteJSON(Message{Type: messageTypeChatMessage, Payload: chatMsg}); err != nil {
-// 		log.Printf("Error sending chat confirmation to sender: %v", err)
-// 	}
-// }
 
 func chatMessageHandler(conn *websocket.Conn, chatMsg ChatMessage) {
 	chatMsg.CreatedDate = time.Now().Format(time.RFC3339)
@@ -349,8 +312,8 @@ func chatMessageHandler(conn *websocket.Conn, chatMsg ChatMessage) {
 	// 	Content:     chatMsg.Content,
 	// 	CreatedDate: createdDate,
 	// }
-	    // Optionally, log the created date for debugging
-		log.Printf("Message sent with CreatedDate: %s", chatMsg.CreatedDate)
+	// Optionally, log the created date for debugging
+	log.Printf("Message sent with CreatedDate: %s", chatMsg.CreatedDate)
 }
 
 func chatHistoryHandler(conn *websocket.Conn, chatRequest map[string]interface{}) {
