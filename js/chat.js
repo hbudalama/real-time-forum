@@ -77,8 +77,39 @@ function openChatWindow(username) {
     });
 }
 
-function sendMessage() {
+// function sendMessage() {
 
+//     const chatInput = document.getElementById('chat-input');
+//     const message = chatInput.value.trim();
+    
+//     if (!message) {
+//         alert("Message is empty. Please type a message before sending.....");
+//         return;
+//     }
+    
+//     // Get the sender username from a global state, session, or another variable
+//     const sender = loggedInUsername; // Replace this with how you're managing the logged-in user
+
+//     // Send the message through WebSocket
+//     const chatMessage = {
+//         Type: 'CHAT_MESSAGE',
+//         Payload: {
+//             Sender: sender, // Set the actual sender username
+//             Recipient: document.getElementById('user-name-chat').textContent,
+//             Content: message
+//         }
+//     };
+    
+//     // Assuming you have a global WebSocket variable
+//     if (window.socket) {
+//         window.socket.send(JSON.stringify(chatMessage));
+//         chatInput.value = ''; // Clear input after sending
+//     } else {
+//         console.error("WebSocket is not connected.");
+//     }
+// }
+
+function sendMessage() {
     const chatInput = document.getElementById('chat-input');
     const message = chatInput.value.trim();
     
@@ -90,16 +121,22 @@ function sendMessage() {
     // Get the sender username from a global state, session, or another variable
     const sender = loggedInUsername; // Replace this with how you're managing the logged-in user
 
+    // Get the current timestamp
+    const createdDate = new Date().toISOString(); // ISO format is recommended for timestamps
+    console.log("this is the createddated:", createdDate)
+
     // Send the message through WebSocket
     const chatMessage = {
         Type: 'CHAT_MESSAGE',
         Payload: {
             Sender: sender, // Set the actual sender username
             Recipient: document.getElementById('user-name-chat').textContent,
-            Content: message
+            Content: message,
+            CreatedDate: createdDate // Include the timestamp in the message payload
         }
     };
-    
+
+
     // Assuming you have a global WebSocket variable
     if (window.socket) {
         window.socket.send(JSON.stringify(chatMessage));

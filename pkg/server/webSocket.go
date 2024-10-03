@@ -290,6 +290,7 @@ func userListHandler() {
 // }
 
 func chatMessageHandler(conn *websocket.Conn, chatMsg ChatMessage) {
+	chatMsg.CreatedDate = time.Now().Format(time.RFC3339)
 	// Save the chat message to the database
 	err := db.SaveChatMessage(chatMsg.Sender, chatMsg.Recipient, chatMsg.Content)
 	if err != nil {
@@ -340,15 +341,16 @@ func chatMessageHandler(conn *websocket.Conn, chatMsg ChatMessage) {
 		}
 	}
 
-	// Update the last message timestamp
-	createdDate := time.Now().Format(time.RFC3339)
+	// fmt.Println("this is the date:", createdDate)
 
-	chatMsg = ChatMessage{
-		Sender:      chatMsg.Sender,
-		Recipient:   chatMsg.Recipient,
-		Content:     chatMsg.Content,
-		CreatedDate: createdDate,
-	}
+	// chatMsg = ChatMessage{
+	// 	Sender:      chatMsg.Sender,
+	// 	Recipient:   chatMsg.Recipient,
+	// 	Content:     chatMsg.Content,
+	// 	CreatedDate: createdDate,
+	// }
+	    // Optionally, log the created date for debugging
+		log.Printf("Message sent with CreatedDate: %s", chatMsg.CreatedDate)
 }
 
 func chatHistoryHandler(conn *websocket.Conn, chatRequest map[string]interface{}) {
