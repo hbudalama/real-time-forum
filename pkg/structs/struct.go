@@ -80,3 +80,9 @@ type TypingStatus struct {
     Recipient string 
     IsTyping  bool
 }
+
+type LastMessage struct {
+	Sender    string    // The sender of the last message
+	Content   string    // Content of the last message
+	Timestamp time.Time// When the last message was sent
+}

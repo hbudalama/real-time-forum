@@ -1,7 +1,10 @@
 package db
+
 import (
+	"fmt"
 	"log"
 	"rtf/pkg/structs"
+	"time"
 )
 
 func SaveChatMessage(sender, recipient, content string) error {
@@ -13,6 +16,7 @@ func SaveChatMessage(sender, recipient, content string) error {
 	_, err = stmt.Exec(sender, recipient, content)
 	return err
 }
+
 func GetChatHistory(sender, recipient string, limit, offset int) ([]structs.ChatMessage, error) {
     log.Printf("SQL query: sender=%s, recipient=%s", sender, recipient)
     query := `
@@ -41,3 +45,39 @@ func GetChatHistory(sender, recipient string, limit, offset int) ([]structs.Chat
     }
     return messages, nil
 }
+
+func GetLastMessages() ([]structs.LastMessage, error) {
+    query := `
+        SELECT SenderUsername, Content, MAX(CreatedDate) AS Timestamp
+        FROM Chat
+        GROUP BY SenderUsername;
+    `
+    rows, err := db.Query(query)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    var lastMessages []structs.LastMessage
+    for rows.Next() {
+        var lm structs.LastMessage
+        var timestampStr string // Temporary string for scanning
+        err := rows.Scan(&lm.Sender, &lm.Content, &timestampStr)
+        if err != nil {
+            return nil, err
+        }
+
+        // Parse the timestamp string to time.Time
+        lm.Timestamp, err = time.Parse("2006-01-02 15:04:05", timestampStr) // Adjust the format if necessary
+        if err != nil {
+            return nil, err
+        }
+
+        lastMessages = append(lastMessages, lm)
+    }
+    fmt.Println(lastMessages)
+    return lastMessages, nil
+}
+
+
+

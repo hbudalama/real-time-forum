@@ -2,6 +2,7 @@ import { loggedInUsername } from './script.js';
 let offset = 0;
 let typingTimeout; // Added variable to manage typing timeout
 const typingDelay = 1000; // Time in milliseconds to wait before sending typing status
+let activeChatRecipient = null;
 
 window.initializeChat = function initializeChat(event) {
     const clickedElement = event.currentTarget;
@@ -13,6 +14,7 @@ window.initializeChat = function initializeChat(event) {
     }
     
     console.log('Open chat for', username);
+    activeChatRecipient = username;
 
     // Open chat UI and display the selected user's information
     openChatWindow(username);
@@ -77,38 +79,6 @@ function openChatWindow(username) {
     });
 }
 
-// function sendMessage() {
-
-//     const chatInput = document.getElementById('chat-input');
-//     const message = chatInput.value.trim();
-    
-//     if (!message) {
-//         alert("Message is empty. Please type a message before sending.....");
-//         return;
-//     }
-    
-//     // Get the sender username from a global state, session, or another variable
-//     const sender = loggedInUsername; // Replace this with how you're managing the logged-in user
-
-//     // Send the message through WebSocket
-//     const chatMessage = {
-//         Type: 'CHAT_MESSAGE',
-//         Payload: {
-//             Sender: sender, // Set the actual sender username
-//             Recipient: document.getElementById('user-name-chat').textContent,
-//             Content: message
-//         }
-//     };
-    
-//     // Assuming you have a global WebSocket variable
-//     if (window.socket) {
-//         window.socket.send(JSON.stringify(chatMessage));
-//         chatInput.value = ''; // Clear input after sending
-//     } else {
-//         console.error("WebSocket is not connected.");
-//     }
-// }
-
 function sendMessage() {
     const chatInput = document.getElementById('chat-input');
     const message = chatInput.value.trim();
@@ -136,8 +106,6 @@ function sendMessage() {
         }
     };
 
-
-    // Assuming you have a global WebSocket variable
     if (window.socket) {
         window.socket.send(JSON.stringify(chatMessage));
         chatInput.value = ''; // Clear input after sending
@@ -186,6 +154,10 @@ function throttle(func, limit) {
 
 // Function to append new chat messages
 export function appendChatMessage(message) {
+    const currentRecipient = document.getElementById('user-name-chat').textContent;
+    if (message.Sender !== currentRecipient && message.Recipient !== loggedInUsername) {
+        console.log("tkhasi");
+    } 
     const chatMessagesDiv = document.getElementById('chat-messages');
 
     const messageElement = document.createElement('div');

@@ -11,7 +11,7 @@ export function initializeWebSocket() {
         console.log("Connected to WebSocket server");
         requestUserList();
     };
-    
+
     window.socket.onmessage = (event) => {
         handleMessage(event.data);
     };
@@ -38,6 +38,7 @@ function handleMessage(data) {
         const message = JSON.parse(data);
         switch (message.Type) {
             case "USER_LIST":
+                console.log("here update List:", data); // Log the received message
                 updateUsersList(message.Payload);
                 break;
             case "CHAT_MESSAGE":
