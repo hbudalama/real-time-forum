@@ -63,6 +63,9 @@ type Client struct {
 
 var clients []Client
 
+// Global map to track active chat sessions
+var activeChats = make(map[string]map[string]bool) // map[sender]map[recipient]bool
+
 func Echo(w http.ResponseWriter, r *http.Request) {
 	connection, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -390,6 +393,12 @@ func chatMessageHandler(conn *websocket.Conn, chatMsg ChatMessage) {
 
 	fmt.Printf("Sending from %s to %s\n", chatMsg.Sender, chatMsg.Recipient)
 
+	// Check if the recipient is in an active chat with the sender
+	if activeChats[chatMsg.Sender] == nil || !activeChats[chatMsg.Sender][chatMsg.Recipient] {
+		log.Printf("Recipient %s is not in an active chat with sender %s. Message will not be sent.", chatMsg.Recipient, chatMsg.Sender)
+		return // Don't send the message if the recipient isn't in the active chat
+	}
+
 	// Iterate through all connections and find both the recipient and the sender
 	for _, client := range clients {
 		session, err := db.GetSession(client.SessionToken)
@@ -502,53 +511,54 @@ func broadcastTypingStatus(typingStatus structs.TypingStatus) {
 }
 
 func chatOpenedHandler(payload map[string]interface{}) {
-    recipient := payload["Recipient"].(string)
+	// Extract sender and recipient from the payload
+	sender, ok1 := payload["Sender"].(string)
+	recipient, ok2 := payload["Recipient"].(string)
+	if !ok1 || !ok2 {
+		log.Printf("Invalid payload for chat opened: %v", payload)
+		return
+	}
 
-    // Broadcast or notify that the chat window is opened
-    log.Printf("Chat opened for %s", recipient)
+	// Check if a chat session already exists
+	if _, exists := activeChats[sender]; !exists {
+		activeChats[sender] = make(map[string]bool)
+	}
 
-    // You can send a notification to the recipient if required
-    for _, client := range clients {
-        if client.Username == recipient {
-            message := Message{
-                Type: messageTypeChatOpened,
-                Payload: map[string]string{
-                    "Recipient": recipient,
-                },
-            }
-            client.Conn.WriteJSON(message)
-        }
-    }
+	// Mark the recipient as having their chat opened
+	activeChats[sender][recipient] = true
+
+	// Optionally, send a notification or log that the chat has been opened
+	fmt.Printf("Chat opened between %s and %s", sender, recipient)
 }
 
 func chatClosedHandler(connection *websocket.Conn) {
-    var sender string
+	var sender string
 
-    // Identify the sender based on the WebSocket connection
-    for _, client := range clients {
-        if client.Conn == connection {
-            sender = client.Username
-            break
-        }
-    }
+	// Identify the sender based on the WebSocket connection
+	for _, client := range clients {
+		if client.Conn == connection {
+			sender = client.Username
+			break
+		}
+	}
 
-    if sender == "" {
-        log.Printf("Sender could not be identified for closed chat")
-        return
-    }
+	if sender == "" {
+		log.Printf("Sender could not be identified for closed chat")
+		return
+	}
 
-    log.Printf("Chat closed by %s", sender)
+	log.Printf("Chat closed by %s", sender)
 
-    // Notify the other users or the recipient that this user closed the chat
-    for _, client := range clients {
-        if client.Username != sender {
-            message := Message{
-                Type: messageTypeChatClosed,
-                Payload: map[string]string{
-                    "Sender": sender,
-                },
-            }
-            client.Conn.WriteJSON(message)
-        }
-    }
+	// Notify the other users or the recipient that this user closed the chat
+	for _, client := range clients {
+		if client.Username != sender {
+			message := Message{
+				Type: messageTypeChatClosed,
+				Payload: map[string]string{
+					"Sender": sender,
+				},
+			}
+			client.Conn.WriteJSON(message)
+		}
+	}
 }

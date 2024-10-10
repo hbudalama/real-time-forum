@@ -31,11 +31,12 @@ window.initializeChat = function initializeChat(event) {
     requestChatHistory(username, offset);
 }
 
-export function chatOpened(recipient) {
+export function chatOpened(sender) {
     const chatOpened = {
         Type: 'CHAT_OPENED',
         Payload: {
-            Recipient: recipient
+            Sender: sender,
+            Recipient: activeChatRecipient
         }
     };
     console.log("CHAT OPENED")
