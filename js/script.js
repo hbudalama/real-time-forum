@@ -1,6 +1,7 @@
 import {initializeWebSocket} from './webSocket.js'
 import { initializePosts } from './posts.js';
 import { initializeLikeDislikeButtons } from './likesDislikes.js';
+import { activeChatRecipient, chatClosed } from './chat.js';
 
 export let loggedInUsername = null;
 
@@ -25,6 +26,9 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
     document.querySelector('.logo').addEventListener('click', function (event) {
+        if (activeChatRecipient) {
+            chatClosed()
+        } 
         event.preventDefault();
         loadForum();
         console.log("didn't refresh")

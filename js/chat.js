@@ -2,19 +2,26 @@ import { loggedInUsername } from './script.js';
 let offset = 0;
 let typingTimeout; // Added variable to manage typing timeout
 const typingDelay = 1000; // Time in milliseconds to wait before sending typing status
-let activeChatRecipient = null;
+export let activeChatRecipient = null;
 
+// @ts-expect-error fuck u
 window.initializeChat = function initializeChat(event) {
     const clickedElement = event.currentTarget;
     const username = clickedElement.dataset.username;
-    
+
+
     if (!username) {
         console.error("Username not found on clicked element.");
         return;
     }
+
+    chatOpened(username);
     
     console.log('Open chat for', username);
     activeChatRecipient = username;
+
+    
+
 
     // Open chat UI and display the selected user's information
     openChatWindow(username);
@@ -22,6 +29,46 @@ window.initializeChat = function initializeChat(event) {
     offset = 0;
     // Send a request to the server to get the last 10 messages on chat open
     requestChatHistory(username, offset);
+}
+
+export function chatOpened(recipient) {
+    const chatOpened = {
+        Type: 'CHAT_OPENED',
+        Payload: {
+            Recipient: recipient
+        }
+    };
+    console.log("CHAT OPENED")
+    window.socket.send(JSON.stringify(chatOpened));
+}
+
+window.addEventListener('beforeunload', function () {
+    if (activeChatRecipient) {
+        console.log("CHAT CLOSING")
+        chatClosed();
+    }
+});
+
+window.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'hidden' && activeChatRecipient) {
+        console.log("CHAT CLOSING due to tab switch or visibility change");
+        chatClosed();
+    }
+});
+
+export function chatClosed() {
+    activeChatRecipient = null;
+    const chatClosed = {
+        Type: 'CHAT_CLOSED',
+        Payload: {
+        }
+    };
+    if (window.socket && window.socket.readyState === WebSocket.OPEN) {
+        window.socket.send(JSON.stringify(chatClosed));
+        console.log("CHAT CLOSED sent to WebSocket");
+    } else {
+        console.error("WebSocket is not connected.");
+    }
 }
 
 function requestChatHistory(recipient, offset) {
@@ -51,6 +98,7 @@ function openChatWindow(username) {
         console.error("Chat container is missing.");
         return;
     }
+
 
     // Example: Clear existing content and show the new chat UI
     container.innerHTML = 
@@ -100,7 +148,7 @@ function sendMessage() {
         Type: 'CHAT_MESSAGE',
         Payload: {
             Sender: sender, // Set the actual sender username
-            Recipient: document.getElementById('user-name-chat').textContent,
+            Recipient: activeChatRecipient,
             Content: message,
             CreatedDate: createdDate // Include the timestamp in the message payload
         }
@@ -154,10 +202,18 @@ function throttle(func, limit) {
 
 // Function to append new chat messages
 export function appendChatMessage(message) {
-    const currentRecipient = document.getElementById('user-name-chat').textContent;
-    if (message.Sender !== currentRecipient && message.Recipient !== loggedInUsername) {
+    console.log(message)
+    console.log("this is recipient:", message.Recipient)
+    console.log("this is active chat user:", activeChatRecipient)
+
+    // fix this condition: if sender messages recipient that isnt active in that specific chat,
+    // dont append the message to the recipient!
+
+    if (message.Sender === loggedInUsername && message.Recipient === activeChatRecipient) {
         console.log("tkhasi");
-    } 
+    }
+    
+     
     const chatMessagesDiv = document.getElementById('chat-messages');
 
     const messageElement = document.createElement('div');
@@ -224,3 +280,4 @@ export function sendTypingToRecipient(isTyping, recipientUsername) {
         window.socket.send(JSON.stringify(message));
     }
 }
+

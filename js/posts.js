@@ -1,3 +1,4 @@
+import { activeChatRecipient, chatClosed } from './chat.js';
 import { initializeLikeDislikeButtons } from './likesDislikes.js';
 
 export function initializePosts() {
@@ -5,6 +6,9 @@ export function initializePosts() {
     const container = document.getElementById('main-content');
 
     postBtn.addEventListener('click', () => {
+        if (activeChatRecipient) {
+            chatClosed()
+        }
         const existingForm = document.getElementById('create-post-form');
         if (existingForm) {
             console.log('Post creation form is already visible.');
@@ -164,6 +168,3 @@ function validateForm() {
     }
     return true;
 }
-
-// document.addEventListener
-//document.addEventListener('DOMContentLoaded', initializePosts);

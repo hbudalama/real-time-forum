@@ -21,6 +21,8 @@ const (
 	messageTypeChatHistory    = "CHAT_HISTORY"
 	messageTypeNotification   = "NEW_MESSAGE_NOTIFICATION"
 	messageTypeTypingStatus   = "TYPING_STATUS"
+	messageTypeChatOpened     = "CHAT_OPENED"
+	messageTypeChatClosed     = "CHAT_CLOSED"
 )
 
 type Message struct {
@@ -177,6 +179,17 @@ func Echo(w http.ResponseWriter, r *http.Request) {
 
 			// Broadcast typing status to the recipient (User B)
 			broadcastTypingStatus(typingStatus)
+
+		case messageTypeChatOpened:
+			// Handle chat opened
+			if payload, ok := message.Payload.(map[string]interface{}); ok {
+				chatOpenedHandler(payload)
+			} else {
+				log.Printf("Invalid payload for chat opened")
+				connection.WriteJSON(Message{Type: messageTypeError, Payload: "Invalid payload for chat opened"})
+			}
+		case messageTypeChatClosed:
+			chatClosedHandler(connection)
 		default:
 			connection.WriteJSON(Message{Type: messageTypeUnhandledEvent, Payload: fmt.Sprintf("[%s] is not handled", message.Type)})
 		}
@@ -200,7 +213,7 @@ func userListHandler() {
 	// Create a map of username to LastMessage struct
 	if lastMessages == nil {
 		log.Printf("there is no last message")
-		
+
 	}
 
 	userLastMessage := make(map[string]*structs.LastMessage)
@@ -236,7 +249,6 @@ func userListHandler() {
 				continue // Skip the logged-in user
 			}
 
-
 			// Determine the user's status based on the onlineStatus map
 			status := "offline"
 			if onlineStatus[username] {
@@ -244,10 +256,10 @@ func userListHandler() {
 			}
 
 			// Add the user to the list, even if there are no messages
-            users = append(users, Users{
-                Username: username,
-                Status:   status,
-            })
+			users = append(users, Users{
+				Username: username,
+				Status:   status,
+			})
 		}
 		fmt.Println("before sorting: ", users)
 		// Sort users: prioritize based on last message, then alphabetically
@@ -271,16 +283,16 @@ func userListHandler() {
 			}
 		})
 
-		 // Send updated user list to the specific client
-		 message := Message{
-            Type:    messageTypeUserList,
-            Payload: users,
-        }
+		// Send updated user list to the specific client
+		message := Message{
+			Type:    messageTypeUserList,
+			Payload: users,
+		}
 		fmt.Println("after sorting: ", users)
-        err = client.Conn.WriteJSON(message)
-        if err != nil {
-            log.Printf("Error sending user list to client: %v", err)
-        }
+		err = client.Conn.WriteJSON(message)
+		if err != nil {
+			log.Printf("Error sending user list to client: %v", err)
+		}
 	}
 }
 
@@ -365,7 +377,6 @@ func userListHandler() {
 // 		}
 // 	}
 // }
-
 
 func chatMessageHandler(conn *websocket.Conn, chatMsg ChatMessage) {
 	chatMsg.CreatedDate = time.Now().Format(time.RFC3339)
@@ -488,4 +499,56 @@ func broadcastTypingStatus(typingStatus structs.TypingStatus) {
 			break
 		}
 	}
+}
+
+func chatOpenedHandler(payload map[string]interface{}) {
+    recipient := payload["Recipient"].(string)
+
+    // Broadcast or notify that the chat window is opened
+    log.Printf("Chat opened for %s", recipient)
+
+    // You can send a notification to the recipient if required
+    for _, client := range clients {
+        if client.Username == recipient {
+            message := Message{
+                Type: messageTypeChatOpened,
+                Payload: map[string]string{
+                    "Recipient": recipient,
+                },
+            }
+            client.Conn.WriteJSON(message)
+        }
+    }
+}
+
+func chatClosedHandler(connection *websocket.Conn) {
+    var sender string
+
+    // Identify the sender based on the WebSocket connection
+    for _, client := range clients {
+        if client.Conn == connection {
+            sender = client.Username
+            break
+        }
+    }
+
+    if sender == "" {
+        log.Printf("Sender could not be identified for closed chat")
+        return
+    }
+
+    log.Printf("Chat closed by %s", sender)
+
+    // Notify the other users or the recipient that this user closed the chat
+    for _, client := range clients {
+        if client.Username != sender {
+            message := Message{
+                Type: messageTypeChatClosed,
+                Payload: map[string]string{
+                    "Sender": sender,
+                },
+            }
+            client.Conn.WriteJSON(message)
+        }
+    }
 }

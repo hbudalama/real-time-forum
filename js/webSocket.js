@@ -1,4 +1,4 @@
-import { appendChatMessage,  prependChatMessages } from './chat.js';
+import { appendChatMessage,  prependChatMessages, chatClosed, chatOpened } from './chat.js';
 import { loggedInUsername } from './script.js';
 let typingTimeout;
 const typingDelay = 2000; // 2 seconds delay to indicate "stopped typing"
