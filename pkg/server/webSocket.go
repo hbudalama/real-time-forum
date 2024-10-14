@@ -99,7 +99,7 @@ func Echo(w http.ResponseWriter, r *http.Request) {
 	clients = append(clients, client)
 
 	// Send the updated user list to all clients (including the new connection)
-	userListHandler()
+	//userListHandler()
 
 	defer func() {
 		// Remove the client from the list upon disconnect
@@ -141,7 +141,7 @@ func Echo(w http.ResponseWriter, r *http.Request) {
 		switch message.Type {
 		case messageTypeUserList:
 			// Send the personalized user list to this client
-			fmt.Println("here!!")
+			fmt.Println("calling usersListHandler...")
 			userListHandler()
 
 		case messageTypeChatMessage:
@@ -203,12 +203,16 @@ func userListHandler() {
 		return
 	}
 
+	fmt.Println("All usernames: ", dbUsers)
+
 	// Fetch the latest messages for each user from the Chat table
 	lastMessages, err := db.GetLastMessages() // Custom function to get last messages
 	if err != nil {
 		log.Printf("Error getting last messages: %v", err)
 		return
 	}
+
+	fmt.Println("last message: ", lastMessages)
 
 	// Create a map of username to LastMessage struct
 	if lastMessages == nil {
@@ -296,88 +300,6 @@ func userListHandler() {
 	}
 }
 
-// func userListHandler() {
-// 	dbUsers, err := db.GetAllUsernames()
-// 	if err != nil {
-// 		log.Printf("Error getting users list: %v", err)
-// 		return
-// 	}
-
-// 	// Create a map to track online status and last message timestamp
-// 	onlineStatus := make(map[string]bool)
-// 	lastMessageTimestamps := make(map[string]time.Time)
-
-// 	// Mark users as online based on active WebSocket connections
-// 	for _, client := range clients {
-// 		if client.IsOnline {
-// 			onlineStatus[client.Username] = true
-// 		}
-// 	}
-
-// 	// Get the last message timestamps for users
-// 	for _, username := range dbUsers {
-// 		lastMessage, err := db.GetLastMessageByUsername(username)
-// 		if err == nil && lastMessage != nil {
-// 			lastMessageTimestamps[username] = lastMessage.Timestamp
-// 		} else {
-// 			// If no messages, assign a default timestamp
-// 			lastMessageTimestamps[username] = time.Time{} // Zero value of time.Time means no messages
-// 		}
-// 	}
-
-// 	// Build the user list
-// 	users := make([]Users, 0)
-// 	for _, username := range dbUsers {
-// 		status := "offline"
-// 		if onlineStatus[username] {
-// 			status = "online"
-// 		}
-
-// 		users = append(users, Users{
-// 			Username: username,
-// 			Status:   status,
-// 		})
-// 	}
-
-// 	// Sort users by last message timestamp, then alphabetically for users without messages
-// 	sort.Slice(users, func(i, j int) bool {
-// 		timeI := lastMessageTimestamps[users[i].Username]
-// 		timeJ := lastMessageTimestamps[users[j].Username]
-
-// 		// Sort by timestamp (most recent first), then alphabetically if no messages
-// 		if (timeI != time.Time{}) && (timeJ != time.Time{}) {
-// 			return timeI.After(timeJ)
-// 		} else if (timeI == time.Time{}) && (timeJ == time.Time{}) {
-// 			return users[i].Username < users[j].Username
-// 		} else {
-// 			return timeI != time.Time{} // Users with messages first
-// 		}
-// 	})
-
-// 	// Send the sorted user list to all clients
-// 	for _, client := range clients {
-// 		// Get the session associated with the client
-// 		session, err := db.GetSession(client.SessionToken)
-// 		if err != nil || session == nil {
-// 			log.Printf("Error getting session for client: %v", err)
-// 			continue
-// 		}
-
-// 		loggedInUsername := session.User.Username
-
-// 		// Create a personalized message for this client
-// 		message := Message{
-// 			Type:    messageTypeUserList,
-// 			Payload: users,
-// 		}
-
-// 		// Send the personalized user list to the client
-// 		if err := client.Conn.WriteJSON(message); err != nil {
-// 			log.Printf("Error writing user list to client %s: %v", loggedInUsername, err)
-// 		}
-// 	}
-// }
-
 func chatMessageHandler(conn *websocket.Conn, chatMsg ChatMessage) {
 	chatMsg.CreatedDate = time.Now().Format(time.RFC3339)
 	// Save the chat message to the database
@@ -431,6 +353,8 @@ func chatMessageHandler(conn *websocket.Conn, chatMsg ChatMessage) {
 	}
 
 	log.Printf("Message sent with CreatedDate: %s", chatMsg.CreatedDate)
+
+	userListHandler()
 }
 
 func chatHistoryHandler(conn *websocket.Conn, chatRequest map[string]interface{}) {

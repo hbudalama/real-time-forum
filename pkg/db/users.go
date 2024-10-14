@@ -3,7 +3,6 @@ package db
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"log"
 	"rtf/pkg/structs"
 	"strings"
@@ -90,6 +89,5 @@ func GetAllUsernames() ([]string, error) {
         }
         usernames = append(usernames, username)
     }
-	fmt.Println(usernames)
     return usernames, nil
 }

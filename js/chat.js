@@ -20,7 +20,6 @@ window.initializeChat = function initializeChat(event) {
     console.log('Open chat for', username);
     activeChatRecipient = username;
 
-    
 
 
     // Open chat UI and display the selected user's information

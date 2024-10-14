@@ -46,9 +46,10 @@ func GetChatHistory(sender, recipient string, limit, offset int) ([]structs.Chat
     return messages, nil
 }
 
+
 func GetLastMessages() ([]structs.LastMessage, error) {
     query := `
-        SELECT SenderUsername, Content, MAX(CreatedDate) AS Timestamp
+        SELECT DISTINCT SenderUsername, Content, MAX(CreatedDate) AS Timestamp
         FROM Chat
         GROUP BY SenderUsername;
     `
@@ -59,8 +60,9 @@ func GetLastMessages() ([]structs.LastMessage, error) {
     defer rows.Close()
 
     var lastMessages []structs.LastMessage
+    var lm structs.LastMessage
     for rows.Next() {
-        var lm structs.LastMessage
+        // var lm structs.LastMessage
         var timestampStr string // Temporary string for scanning
         err := rows.Scan(&lm.Sender, &lm.Content, &timestampStr)
         if err != nil {
@@ -74,8 +76,10 @@ func GetLastMessages() ([]structs.LastMessage, error) {
         }
 
         lastMessages = append(lastMessages, lm)
+        fmt.Println("lm.Sender", lm.Sender)
+        fmt.Println("lm.Content", lm.Content)
+        fmt.Println(len(lastMessages))
     }
-    fmt.Println(lastMessages)
     return lastMessages, nil
 }
 
