@@ -3,6 +3,8 @@ import { loggedInUsername } from './script.js';
 let typingTimeout;
 const typingDelay = 2000; // 2 seconds delay to indicate "stopped typing"
 
+
+
 export function initializeWebSocket() {
     const socket = new WebSocket("ws://localhost:8080/api/ws");
     window.socket = socket;

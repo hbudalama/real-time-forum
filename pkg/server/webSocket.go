@@ -64,7 +64,8 @@ type Client struct {
 var clients []Client
 
 // Global map to track active chat sessions
-var activeChats = make(map[string]map[string]bool) // map[sender]map[recipient]bool
+// Sender -> Reciptient
+var activeChats = make(map[string]string)
 
 func Echo(w http.ResponseWriter, r *http.Request) {
 	connection, err := upgrader.Upgrade(w, r, nil)
@@ -333,10 +334,12 @@ func chatMessageHandler(conn *websocket.Conn, chatMsg ChatMessage) {
 		return
 	}
 
-	fmt.Printf("Sending from %s to %s\n", chatMsg.Sender, chatMsg.Recipient)
+	log.Printf("Sending from %s to %s\n", chatMsg.Sender, chatMsg.Recipient)
+
+	log.Printf("%+v\n", activeChats)
 
 	// Check if the recipient is in an active chat with the sender
-	if activeChats[chatMsg.Sender] == nil || !activeChats[chatMsg.Sender][chatMsg.Recipient] {
+	if activeChats[chatMsg.Recipient] == chatMsg.Sender {
 		log.Printf("Recipient %s is not in an active chat with sender %s. Message will not be sent.", chatMsg.Recipient, chatMsg.Sender)
 		return // Don't send the message if the recipient isn't in the active chat
 	}
@@ -461,13 +464,11 @@ func chatOpenedHandler(payload map[string]interface{}) {
 		return
 	}
 
-	// Check if a chat session already exists
-	if _, exists := activeChats[sender]; !exists {
-		activeChats[sender] = make(map[string]bool)
-	}
-
 	// Mark the recipient as having their chat opened
-	activeChats[sender][recipient] = true
+	activeChats[sender] = recipient
+	
+
+	
 
 	// Optionally, send a notification or log that the chat has been opened
 	fmt.Printf("Chat opened between %s and %s", sender, recipient)

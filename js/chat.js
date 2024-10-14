@@ -50,12 +50,12 @@ window.addEventListener('beforeunload', function () {
     }
 });
 
-window.addEventListener('visibilitychange', function () {
-    if (document.visibilityState === 'hidden' && activeChatRecipient) {
-        console.log("CHAT CLOSING due to tab switch or visibility change");
-        chatClosed();
-    }
-});
+// window.addEventListener('visibilitychange', function () {
+//     if (document.visibilityState === 'hidden' && activeChatRecipient) {
+//         console.log("CHAT CLOSING due to tab switch or visibility change");
+//         chatClosed();
+//     }
+// });
 
 export function chatClosed() {
     activeChatRecipient = null;
