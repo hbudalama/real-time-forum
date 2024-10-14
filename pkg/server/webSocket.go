@@ -148,15 +148,39 @@ func Echo(w http.ResponseWriter, r *http.Request) {
 			userListHandler()
 
 		case messageTypeChatMessage:
-			// Extract the chat message from the payload
+			// Extract the chat message from the payload with checks
 			var chatMessage ChatMessage
 			if payload, ok := message.Payload.(map[string]interface{}); ok {
-				chatMessage.Sender = payload["Sender"].(string)
-				chatMessage.Recipient = payload["Recipient"].(string)
-				chatMessage.Content = payload["Content"].(string)
-			}
-			chatMessageHandler(connection, chatMessage)
+				// Check if Sender is a valid string
+				if sender, ok := payload["Sender"].(string); ok && sender != "" {
+					chatMessage.Sender = sender
+				} else {
+					log.Printf("Invalid or missing sender in payload")
+					connection.WriteJSON(Message{Type: messageTypeError, Payload: "Invalid or missing sender"})
+					continue
+				}
 
+				// Check if Recipient is a valid string
+				if recipient, ok := payload["Recipient"].(string); ok && recipient != "" {
+					chatMessage.Recipient = recipient
+				} else {
+					log.Printf("Invalid or missing recipient in payload")
+					connection.WriteJSON(Message{Type: messageTypeError, Payload: "Invalid or missing recipient"})
+					continue
+				}
+
+				// Check if Content is a valid string
+				if content, ok := payload["Content"].(string); ok && content != "" {
+					chatMessage.Content = content
+				} else {
+					log.Printf("Invalid or missing content in payload")
+					connection.WriteJSON(Message{Type: messageTypeError, Payload: "Invalid or missing content"})
+					continue
+				}
+
+				// Call the handler for sending the chat message
+				chatMessageHandler(connection, chatMessage)
+			}
 		case messageTypeChatHistory:
 			if payload, ok := message.Payload.(map[string]interface{}); ok {
 				chatHistoryHandler(connection, payload)
@@ -298,88 +322,6 @@ func userListHandler() {
 		}
 	}
 }
-
-// func userListHandler() {
-// 	dbUsers, err := db.GetAllUsernames()
-// 	if err != nil {
-// 		log.Printf("Error getting users list: %v", err)
-// 		return
-// 	}
-
-// 	// Create a map to track online status and last message timestamp
-// 	onlineStatus := make(map[string]bool)
-// 	lastMessageTimestamps := make(map[string]time.Time)
-
-// 	// Mark users as online based on active WebSocket connections
-// 	for _, client := range clients {
-// 		if client.IsOnline {
-// 			onlineStatus[client.Username] = true
-// 		}
-// 	}
-
-// 	// Get the last message timestamps for users
-// 	for _, username := range dbUsers {
-// 		lastMessage, err := db.GetLastMessageByUsername(username)
-// 		if err == nil && lastMessage != nil {
-// 			lastMessageTimestamps[username] = lastMessage.Timestamp
-// 		} else {
-// 			// If no messages, assign a default timestamp
-// 			lastMessageTimestamps[username] = time.Time{} // Zero value of time.Time means no messages
-// 		}
-// 	}
-
-// 	// Build the user list
-// 	users := make([]Users, 0)
-// 	for _, username := range dbUsers {
-// 		status := "offline"
-// 		if onlineStatus[username] {
-// 			status = "online"
-// 		}
-
-// 		users = append(users, Users{
-// 			Username: username,
-// 			Status:   status,
-// 		})
-// 	}
-
-// 	// Sort users by last message timestamp, then alphabetically for users without messages
-// 	sort.Slice(users, func(i, j int) bool {
-// 		timeI := lastMessageTimestamps[users[i].Username]
-// 		timeJ := lastMessageTimestamps[users[j].Username]
-
-// 		// Sort by timestamp (most recent first), then alphabetically if no messages
-// 		if (timeI != time.Time{}) && (timeJ != time.Time{}) {
-// 			return timeI.After(timeJ)
-// 		} else if (timeI == time.Time{}) && (timeJ == time.Time{}) {
-// 			return users[i].Username < users[j].Username
-// 		} else {
-// 			return timeI != time.Time{} // Users with messages first
-// 		}
-// 	})
-
-// 	// Send the sorted user list to all clients
-// 	for _, client := range clients {
-// 		// Get the session associated with the client
-// 		session, err := db.GetSession(client.SessionToken)
-// 		if err != nil || session == nil {
-// 			log.Printf("Error getting session for client: %v", err)
-// 			continue
-// 		}
-
-// 		loggedInUsername := session.User.Username
-
-// 		// Create a personalized message for this client
-// 		message := Message{
-// 			Type:    messageTypeUserList,
-// 			Payload: users,
-// 		}
-
-// 		// Send the personalized user list to the client
-// 		if err := client.Conn.WriteJSON(message); err != nil {
-// 			log.Printf("Error writing user list to client %s: %v", loggedInUsername, err)
-// 		}
-// 	}
-// }
 
 func chatMessageHandler(conn *websocket.Conn, chatMsg ChatMessage) {
 	chatMsg.CreatedDate = time.Now().Format(time.RFC3339)
