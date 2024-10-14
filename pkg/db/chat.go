@@ -47,13 +47,20 @@ func GetChatHistory(sender, recipient string, limit, offset int) ([]structs.Chat
 }
 
 
-func GetLastMessages() ([]structs.LastMessage, error) {
+func GetLastMessages(loggedInUsername string) ([]structs.LastMessage, error) {
     query := `
-        SELECT DISTINCT SenderUsername, Content, MAX(CreatedDate) AS Timestamp
+        SELECT CASE 
+                  WHEN SenderUsername = ? THEN RecipientUsername 
+                  ELSE SenderUsername 
+              END AS Username, 
+              Content, 
+              MAX(CreatedDate) AS Timestamp
         FROM Chat
-        GROUP BY SenderUsername;
+        WHERE SenderUsername = ? OR RecipientUsername = ?
+        GROUP BY Username;
     `
-    rows, err := db.Query(query)
+
+    rows, err := db.Query(query, loggedInUsername, loggedInUsername, loggedInUsername) // Provide the logged-in user as a parameter
     if err != nil {
         return nil, err
     }
