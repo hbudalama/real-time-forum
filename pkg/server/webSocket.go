@@ -366,29 +366,6 @@ func chatMessageHandler(client *Client, chatMsg ChatMessage) {
 		}
 	}
 
-	// 	// Notify the recipient
-	// 	if session.User.Username == chatMsg.Recipient {
-	// 		log.Println("Sending message to recipient...")
-
-	// 		// Send the chat message to the recipient
-	// 		if err := client.Conn.WriteJSON(Message{Type: messageTypeChatMessage, Payload: chatMsg}); err != nil {
-	// 			log.Printf("Error sending chat message to recipient: %v", err)
-	// 		}
-
-	// 		// Send a notification to the recipient
-	// 		notificationMessage := Message{
-	// 			Type: messageTypeNotification,
-	// 			Payload: map[string]string{
-	// 				"Sender":  client.Username,
-	// 				"Content": chatMsg.Content,
-	// 			},
-	// 		}
-	// 		if err := client.Conn.WriteJSON(notificationMessage); err != nil {
-	// 			log.Printf("Error sending notification to recipient: %v", err)
-	// 		}
-	// 	}
-	// }
-
 	log.Printf("Message sent with CreatedDate: %s", chatMsg.CreatedDate)
 }
 
