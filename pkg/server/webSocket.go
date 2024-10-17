@@ -218,108 +218,108 @@ func Echo(w http.ResponseWriter, r *http.Request) {
 }
 
 func userListHandler() {
-    dbUsers, err := db.GetAllUsernames() // Fetch all usernames
-    if err != nil {
-        log.Printf("Error getting users list: %v", err)
-        return
-    }
-
-    fmt.Println("All usernames: ", dbUsers)
-
-    // Send the user list to all clients
-    for _, client := range clients {
-        // Get the session associated with the client
-        session, err := db.GetSession(client.SessionToken)
-        if err != nil || session == nil {
-            log.Printf("Error getting session for client: %v", err)
-            continue
-        }
-
-        loggedInUsername := session.User.Username
-
-        // Fetch the latest messages for each user from the Chat table
-        lastMessages, err := db.GetLastMessages() // Pass loggedInUsername
-        if err != nil {
-            log.Printf("Error getting last messages: %v", err)
-            return
-        }
-
-	// Create a map of username to LastMessage struct
-	if lastMessages == nil {
-		log.Printf("there is no last message")
+	dbUsers, err := db.GetAllUsernames() // Fetch all usernames
+	if err != nil {
+		log.Printf("Error getting users list: %v", err)
 		return
-
 	}
 
-	userLastMessage := make(map[string]*structs.LastMessage)
-	for _, msg := range lastMessages {
-		userLastMessage[msg.Sender] = &msg
+	fmt.Println("All usernames: ", dbUsers)
+
+	// Send the user list to all clients
+	for _, client := range clients {
+		// Get the session associated with the client
+		session, err := db.GetSession(client.SessionToken)
+		if err != nil || session == nil {
+			log.Printf("Error getting session for client: %v", err)
+			continue
+		}
+
+		loggedInUsername := session.User.Username
+
+		// Fetch the latest messages for each user from the Chat table
+		lastMessages, err := db.GetLastMessages(loggedInUsername) // Pass loggedInUsername
+		if err != nil {
+			log.Printf("Error getting last messages: %v", err)
+			return
+		}
+
+		// Create a map of username to LastMessage struct
+		if lastMessages == nil {
+			log.Printf("there is no last message")
+			return
+
+		}
+
+		userLastMessage := make(map[string]*structs.LastMessage)
+		for _, msg := range lastMessages {
+			userLastMessage[msg.Sender] = &msg
+		}
+
+		// Create a map to track online status
+		onlineStatus := make(map[string]bool)
+
+		// Mark users as online based on active WebSocket connections
+		for _, client := range clients {
+			if client.IsOnline {
+				onlineStatus[client.Username] = true
+			}
+		}
+
+		// Build the user list, excluding the logged-in user
+		users := make([]Users, 0)
+		for _, username := range dbUsers {
+			if username == loggedInUsername {
+				continue // Skip the logged-in user
+			}
+
+			// Determine the user's status based on the onlineStatus map
+			status := "offline"
+			if onlineStatus[username] {
+				status = "online"
+			}
+
+			// Add the user to the list, even if there are no messages
+			users = append(users, Users{
+				Username: username,
+				Status:   status,
+			})
+		}
+
+		fmt.Println("Before sorting: ", users)
+
+		// Sort users: prioritize based on last message, then alphabetically
+		sort.Slice(users, func(i, j int) bool {
+			// Check if both users have messages
+			msgI, okI := userLastMessage[users[i].Username]
+			msgJ, okJ := userLastMessage[users[j].Username]
+
+			if okI && okJ {
+				// Compare timestamps (latest first)
+				return msgI.Timestamp.After(msgJ.Timestamp)
+			} else if okI {
+				// If only user i has messages, they go first
+				return true
+			} else if okJ {
+				// If only user j has messages, they go first
+				return false
+			} else {
+				// If neither has messages, sort alphabetically
+				return users[i].Username < users[j].Username
+			}
+		})
+
+		// Send updated user list to the specific client
+		message := Message{
+			Type:    messageTypeUserList,
+			Payload: users,
+		}
+		fmt.Println("After sorting: ", users)
+		err = client.Conn.WriteJSON(message)
+		if err != nil {
+			log.Printf("Error sending user list to client: %v", err)
+		}
 	}
-
-        // Create a map to track online status
-        onlineStatus := make(map[string]bool)
-
-        // Mark users as online based on active WebSocket connections
-        for _, client := range clients {
-            if client.IsOnline {
-                onlineStatus[client.Username] = true
-            }
-        }
-
-        // Build the user list, excluding the logged-in user
-        users := make([]Users, 0)
-        for _, username := range dbUsers {
-            if username == loggedInUsername {
-                continue // Skip the logged-in user
-            }
-
-            // Determine the user's status based on the onlineStatus map
-            status := "offline"
-            if onlineStatus[username] {
-                status = "online"
-            }
-
-            // Add the user to the list, even if there are no messages
-            users = append(users, Users{
-                Username: username,
-                Status:   status,
-            })
-        }
-
-        fmt.Println("Before sorting: ", users)
-
-        // Sort users: prioritize based on last message, then alphabetically
-        sort.Slice(users, func(i, j int) bool {
-            // Check if both users have messages
-            msgI, okI := userLastMessage[users[i].Username]
-            msgJ, okJ := userLastMessage[users[j].Username]
-
-            if okI && okJ {
-                // Compare timestamps (latest first)
-                return msgI.Timestamp.After(msgJ.Timestamp)
-            } else if okI {
-                // If only user i has messages, they go first
-                return true
-            } else if okJ {
-                // If only user j has messages, they go first
-                return false
-            } else {
-                // If neither has messages, sort alphabetically
-                return users[i].Username < users[j].Username
-            }
-        })
-
-        // Send updated user list to the specific client
-        message := Message{
-            Type:    messageTypeUserList,
-            Payload: users,
-        }
-        fmt.Println("After sorting: ", users)
-        err = client.Conn.WriteJSON(message)
-        if err != nil {
-            log.Printf("Error sending user list to client: %v", err)
-        }
-    }
 }
 
 func chatMessageHandler(client *Client, chatMsg ChatMessage) {
