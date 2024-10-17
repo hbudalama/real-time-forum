@@ -141,7 +141,6 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func PostHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("i'm the post handler")
 	if r.Method == http.MethodGet && r.URL.Path == "/api/posts" {
 		// Get all posts from the database
 		posts := db.GetAllPosts()
