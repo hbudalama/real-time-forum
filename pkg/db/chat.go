@@ -39,7 +39,7 @@ func GetChatHistory(sender, recipient string, limit, offset int) ([]structs.Chat
         }
         messages = append(messages, message)
     }
-    log.Printf("Fetched chat history: %v", messages)
+
     if len(messages) == 0 {
         return nil, nil // Return nil if no messages found
     }

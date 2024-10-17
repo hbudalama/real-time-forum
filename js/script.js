@@ -115,7 +115,6 @@ function loadForum() {
     .then(data => {
         if (data.username) {
             loggedInUsername = data.username;
-            console.log(loggedInUsername);
             const greetingDiv = document.getElementById('greeting');
             greetingDiv.textContent = `Hello, ${data.username}!`;
         }

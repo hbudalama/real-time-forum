@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"rtf/pkg/db"
 	"rtf/pkg/structs"
+	"slices"
 	"sort"
 	"time"
 
@@ -63,6 +64,10 @@ type Client struct {
 
 var clients []Client
 
+// Global map to track active chat sessions
+// Sender -> Reciptient
+var activeChats = make(map[string]string)
+
 func Echo(w http.ResponseWriter, r *http.Request) {
 	connection, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -102,6 +107,7 @@ func Echo(w http.ResponseWriter, r *http.Request) {
 	//userListHandler()
 
 	defer func() {
+		delete(activeChats, client.Username)
 		// Remove the client from the list upon disconnect
 		for i, c := range clients {
 			if c.Conn == connection {
@@ -145,15 +151,32 @@ func Echo(w http.ResponseWriter, r *http.Request) {
 			userListHandler()
 
 		case messageTypeChatMessage:
-			// Extract the chat message from the payload
+			// Extract the chat message from the payload with checks
 			var chatMessage ChatMessage
-			if payload, ok := message.Payload.(map[string]interface{}); ok {
-				chatMessage.Sender = payload["Sender"].(string)
-				chatMessage.Recipient = payload["Recipient"].(string)
-				chatMessage.Content = payload["Content"].(string)
-			}
-			chatMessageHandler(connection, chatMessage)
+			chatMessage.Sender = client.Username
 
+			if payload, ok := message.Payload.(map[string]interface{}); ok {
+				// Check if Recipient is a valid string
+				if recipient, ok := payload["Recipient"].(string); ok && recipient != "" {
+					chatMessage.Recipient = recipient
+				} else {
+					log.Printf("Invalid or missing recipient in payload")
+					connection.WriteJSON(Message{Type: messageTypeError, Payload: "Invalid or missing recipient"})
+					continue
+				}
+
+				// Check if Content is a valid string
+				if content, ok := payload["Content"].(string); ok && content != "" {
+					chatMessage.Content = content
+				} else {
+					log.Printf("Invalid or missing content in payload")
+					connection.WriteJSON(Message{Type: messageTypeError, Payload: "Invalid or missing content"})
+					continue
+				}
+
+				// Call the handler for sending the chat message
+				chatMessageHandler(&client, chatMessage)
+			}
 		case messageTypeChatHistory:
 			if payload, ok := message.Payload.(map[string]interface{}); ok {
 				chatHistoryHandler(connection, payload)
@@ -175,21 +198,19 @@ func Echo(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 
-			fmt.Printf("Typing status: %+v\n", typingStatus)
-
 			// Broadcast typing status to the recipient (User B)
 			broadcastTypingStatus(typingStatus)
 
 		case messageTypeChatOpened:
 			// Handle chat opened
 			if payload, ok := message.Payload.(map[string]interface{}); ok {
-				chatOpenedHandler(payload)
+				chatOpenedHandler(&client, payload)
 			} else {
 				log.Printf("Invalid payload for chat opened")
 				connection.WriteJSON(Message{Type: messageTypeError, Payload: "Invalid payload for chat opened"})
 			}
 		case messageTypeChatClosed:
-			chatClosedHandler(connection)
+			chatClosedHandler(&client)
 		default:
 			connection.WriteJSON(Message{Type: messageTypeUnhandledEvent, Payload: fmt.Sprintf("[%s] is not handled", message.Type)})
 		}
@@ -197,156 +218,155 @@ func Echo(w http.ResponseWriter, r *http.Request) {
 }
 
 func userListHandler() {
-    dbUsers, err := db.GetAllUsernames() // Fetch all usernames
-    if err != nil {
-        log.Printf("Error getting users list: %v", err)
-        return
-    }
-
-    fmt.Println("All usernames: ", dbUsers)
-
-    // Send the user list to all clients
-    for _, client := range clients {
-        // Get the session associated with the client
-        session, err := db.GetSession(client.SessionToken)
-        if err != nil || session == nil {
-            log.Printf("Error getting session for client: %v", err)
-            continue
-        }
-
-        loggedInUsername := session.User.Username
-
-        // Fetch the latest messages for each user from the Chat table
-        lastMessages, err := db.GetLastMessages(loggedInUsername) // Pass loggedInUsername
-        if err != nil {
-            log.Printf("Error getting last messages: %v", err)
-            return
-        }
-
-        fmt.Println("Last message: ", lastMessages)
-
-        // Create a map of username to LastMessage struct
-        userLastMessage := make(map[string]*structs.LastMessage)
-        for _, msg := range lastMessages {
-            userLastMessage[msg.Sender] = &msg
-        }
-
-        // Create a map to track online status
-        onlineStatus := make(map[string]bool)
-
-        // Mark users as online based on active WebSocket connections
-        for _, client := range clients {
-            if client.IsOnline {
-                onlineStatus[client.Username] = true
-            }
-        }
-
-        // Build the user list, excluding the logged-in user
-        users := make([]Users, 0)
-        for _, username := range dbUsers {
-            if username == loggedInUsername {
-                continue // Skip the logged-in user
-            }
-
-            // Determine the user's status based on the onlineStatus map
-            status := "offline"
-            if onlineStatus[username] {
-                status = "online"
-            }
-
-            // Add the user to the list, even if there are no messages
-            users = append(users, Users{
-                Username: username,
-                Status:   status,
-            })
-        }
-
-        fmt.Println("Before sorting: ", users)
-
-        // Sort users: prioritize based on last message, then alphabetically
-        sort.Slice(users, func(i, j int) bool {
-            // Check if both users have messages
-            msgI, okI := userLastMessage[users[i].Username]
-            msgJ, okJ := userLastMessage[users[j].Username]
-
-            if okI && okJ {
-                // Compare timestamps (latest first)
-                return msgI.Timestamp.After(msgJ.Timestamp)
-            } else if okI {
-                // If only user i has messages, they go first
-                return true
-            } else if okJ {
-                // If only user j has messages, they go first
-                return false
-            } else {
-                // If neither has messages, sort alphabetically
-                return users[i].Username < users[j].Username
-            }
-        })
-
-        // Send updated user list to the specific client
-        message := Message{
-            Type:    messageTypeUserList,
-            Payload: users,
-        }
-        fmt.Println("After sorting: ", users)
-        err = client.Conn.WriteJSON(message)
-        if err != nil {
-            log.Printf("Error sending user list to client: %v", err)
-        }
-    }
-}
-
-
-func chatMessageHandler(conn *websocket.Conn, chatMsg ChatMessage) {
-	chatMsg.CreatedDate = time.Now().Format(time.RFC3339)
-	// Save the chat message to the database
-	err := db.SaveChatMessage(chatMsg.Sender, chatMsg.Recipient, chatMsg.Content)
+	dbUsers, err := db.GetAllUsernames() // Fetch all usernames
 	if err != nil {
-		log.Printf("Error saving chat message: %v", err)
-		conn.WriteJSON(Message{Type: messageTypeError, Payload: "Failed to save message"})
+		log.Printf("Error getting users list: %v", err)
 		return
 	}
 
-	fmt.Printf("Sending from %s to %s\n", chatMsg.Sender, chatMsg.Recipient)
+	fmt.Println("All usernames: ", dbUsers)
 
-	// Iterate through all connections and find both the recipient and the sender
+	// Send the user list to all clients
 	for _, client := range clients {
+		// Get the session associated with the client
 		session, err := db.GetSession(client.SessionToken)
 		if err != nil || session == nil {
+			log.Printf("Error getting session for client: %v", err)
 			continue
 		}
 
-		// Notify the recipient
-		if session.User.Username == chatMsg.Recipient {
-			log.Println("Sending message to recipient...")
+		loggedInUsername := session.User.Username
 
-			// Send the chat message to the recipient
-			if err := client.Conn.WriteJSON(Message{Type: messageTypeChatMessage, Payload: chatMsg}); err != nil {
-				log.Printf("Error sending chat message to recipient: %v", err)
-			}
+		// Fetch the latest messages for each user from the Chat table
+		lastMessages, err := db.GetLastMessages(loggedInUsername) // Pass loggedInUsername
+		if err != nil {
+			log.Printf("Error getting last messages: %v", err)
+			return
+		}
 
-			// Send a notification to the recipient
-			notificationMessage := Message{
-				Type: messageTypeNotification,
-				Payload: map[string]string{
-					"Sender":  chatMsg.Sender,
-					"Content": chatMsg.Content,
-				},
-			}
-			if err := client.Conn.WriteJSON(notificationMessage); err != nil {
-				log.Printf("Error sending notification to recipient: %v", err)
+		// Create a map of username to LastMessage struct
+		if lastMessages == nil {
+			log.Printf("there is no last message")
+			return
+
+		}
+
+		userLastMessage := make(map[string]*structs.LastMessage)
+		for _, msg := range lastMessages {
+			userLastMessage[msg.Sender] = &msg
+		}
+
+		// Create a map to track online status
+		onlineStatus := make(map[string]bool)
+
+		// Mark users as online based on active WebSocket connections
+		for _, client := range clients {
+			if client.IsOnline {
+				onlineStatus[client.Username] = true
 			}
 		}
 
-		// Optionally, notify the sender (if required)
-		if session.User.Username == chatMsg.Sender {
-			log.Println("Sending confirmation to sender...")
-
-			// Send a confirmation back to the sender
-			if err := conn.WriteJSON(Message{Type: messageTypeChatMessage, Payload: chatMsg}); err != nil {
-				log.Printf("Error sending chat confirmation to sender: %v", err)
+		// Build the user list, excluding the logged-in user
+		users := make([]Users, 0)
+		for _, username := range dbUsers {
+			if username == loggedInUsername {
+				continue // Skip the logged-in user
 			}
+
+			// Determine the user's status based on the onlineStatus map
+			status := "offline"
+			if onlineStatus[username] {
+				status = "online"
+			}
+
+			// Add the user to the list, even if there are no messages
+			users = append(users, Users{
+				Username: username,
+				Status:   status,
+			})
+		}
+
+		fmt.Println("Before sorting: ", users)
+
+		// Sort users: prioritize based on last message, then alphabetically
+		sort.Slice(users, func(i, j int) bool {
+			// Check if both users have messages
+			msgI, okI := userLastMessage[users[i].Username]
+			msgJ, okJ := userLastMessage[users[j].Username]
+
+			if okI && okJ {
+				// Compare timestamps (latest first)
+				return msgI.Timestamp.After(msgJ.Timestamp)
+			} else if okI {
+				// If only user i has messages, they go first
+				return true
+			} else if okJ {
+				// If only user j has messages, they go first
+				return false
+			} else {
+				// If neither has messages, sort alphabetically
+				return users[i].Username < users[j].Username
+			}
+		})
+
+		// Send updated user list to the specific client
+		message := Message{
+			Type:    messageTypeUserList,
+			Payload: users,
+		}
+		fmt.Println("After sorting: ", users)
+		err = client.Conn.WriteJSON(message)
+		if err != nil {
+			log.Printf("Error sending user list to client: %v", err)
+		}
+	}
+}
+
+func chatMessageHandler(client *Client, chatMsg ChatMessage) {
+	chatMsg.CreatedDate = time.Now().Format(time.RFC3339)
+	// Save the chat message to the database
+	err := db.SaveChatMessage(client.Username, chatMsg.Recipient, chatMsg.Content)
+	if err != nil {
+		log.Printf("Error saving chat message: %v", err)
+		client.Conn.WriteJSON(Message{Type: messageTypeError, Payload: "Failed to save message"})
+		return
+	}
+
+	log.Printf("Sending from %s to %s\n", client.Username, chatMsg.Recipient)
+
+	log.Printf("%+v\n", activeChats)
+
+	isBothChatting := activeChats[chatMsg.Recipient] == client.Username
+
+	if err := client.Conn.WriteJSON(Message{Type: messageTypeChatMessage, Payload: chatMsg}); err != nil {
+		log.Printf("Error sending chat confirmation to sender: %v", err)
+	}
+
+	recipientIndex := slices.IndexFunc(clients, func(e Client) bool {
+		return e.Username == chatMsg.Recipient
+	})
+	// recipient is offline
+	if recipientIndex == -1 {
+		return
+	}
+	recipient := clients[recipientIndex]
+
+	if isBothChatting {
+		if err := recipient.Conn.WriteJSON(Message{Type: messageTypeChatMessage, Payload: chatMsg}); err != nil {
+			log.Printf("Error sending chat message to recipient: %v", err)
+			return
+		}
+	} else {
+		// Send a notification to the recipient
+		notificationMessage := Message{
+			Type: messageTypeNotification,
+			Payload: map[string]string{
+				"Sender":  client.Username,
+				"Content": chatMsg.Content,
+			},
+		}
+		if err := recipient.Conn.WriteJSON(notificationMessage); err != nil {
+			log.Printf("Error sending notification to recipient: %v", err)
 		}
 	}
 
@@ -401,7 +421,6 @@ func broadcastTypingStatus(typingStatus structs.TypingStatus) {
 		if err != nil || session == nil {
 			continue
 		}
-		fmt.Printf("Comparing sender: %s with recipient: %s, Equal: %t\n", session.User.Username, typingStatus.Recipient, session.User.Username == typingStatus.Recipient)
 
 		// Check if the recipient is the logged-in user
 		if session.User.Username == typingStatus.Recipient {
@@ -414,7 +433,6 @@ func broadcastTypingStatus(typingStatus structs.TypingStatus) {
 					"IsTyping":  typingStatus.IsTyping,
 				},
 			}
-			log.Printf("Broadcasting typing status to %s: %+v", typingStatus.Recipient, message) // Debug log
 			if err := client.Conn.WriteJSON(message); err != nil {
 				log.Printf("Error broadcasting typing status: %v", err)
 			}
@@ -423,54 +441,22 @@ func broadcastTypingStatus(typingStatus structs.TypingStatus) {
 	}
 }
 
-func chatOpenedHandler(payload map[string]interface{}) {
-    recipient := payload["Recipient"].(string)
+func chatOpenedHandler(client *Client, payload map[string]interface{}) {
+	// Extract sender and recipient from the payload
+	recipient, ok := payload["Recipient"].(string)
+	if !ok {
+		log.Println("chatOpenedHandler: Invalid username")
+		return
+	}
+	log.Printf("this is the payload %+v\n", payload)
 
-    // Broadcast or notify that the chat window is opened
-    log.Printf("Chat opened for %s", recipient)
+	// Mark the recipient as having their chat opened
+	activeChats[client.Username] = recipient
 
-    // You can send a notification to the recipient if required
-    for _, client := range clients {
-        if client.Username == recipient {
-            message := Message{
-                Type: messageTypeChatOpened,
-                Payload: map[string]string{
-                    "Recipient": recipient,
-                },
-            }
-            client.Conn.WriteJSON(message)
-        }
-    }
+	// Optionally, send a notification or log that the chat has been opened
+	fmt.Printf("Chat opened between %s and %s\n", client.Username, recipient)
 }
 
-func chatClosedHandler(connection *websocket.Conn) {
-    var sender string
-
-    // Identify the sender based on the WebSocket connection
-    for _, client := range clients {
-        if client.Conn == connection {
-            sender = client.Username
-            break
-        }
-    }
-
-    if sender == "" {
-        log.Printf("Sender could not be identified for closed chat")
-        return
-    }
-
-    log.Printf("Chat closed by %s", sender)
-
-    // Notify the other users or the recipient that this user closed the chat
-    for _, client := range clients {
-        if client.Username != sender {
-            message := Message{
-                Type: messageTypeChatClosed,
-                Payload: map[string]string{
-                    "Sender": sender,
-                },
-            }
-            client.Conn.WriteJSON(message)
-        }
-    }
+func chatClosedHandler(client *Client) {
+	delete(activeChats, client.Username)
 }

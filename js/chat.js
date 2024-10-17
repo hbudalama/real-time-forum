@@ -15,10 +15,10 @@ window.initializeChat = function initializeChat(event) {
         return;
     }
 
+    activeChatRecipient = username;
     chatOpened(username);
     
     console.log('Open chat for', username);
-    activeChatRecipient = username;
 
 
 
@@ -30,6 +30,10 @@ window.initializeChat = function initializeChat(event) {
     requestChatHistory(username, offset);
 }
 
+/**
+ * 
+ * @param {string} recipient 
+ */
 export function chatOpened(recipient) {
     const chatOpened = {
         Type: 'CHAT_OPENED',
@@ -48,12 +52,12 @@ window.addEventListener('beforeunload', function () {
     }
 });
 
-window.addEventListener('visibilitychange', function () {
-    if (document.visibilityState === 'hidden' && activeChatRecipient) {
-        console.log("CHAT CLOSING due to tab switch or visibility change");
-        chatClosed();
-    }
-});
+// window.addEventListener('visibilitychange', function () {
+//     if (document.visibilityState === 'hidden' && activeChatRecipient) {
+//         console.log("CHAT CLOSING due to tab switch or visibility change");
+//         chatClosed();
+//     }
+// });
 
 export function chatClosed() {
     activeChatRecipient = null;
@@ -134,22 +138,13 @@ function sendMessage() {
         alert("Message is empty. Please type a message before sending.....");
         return;
     }
-    
-    // Get the sender username from a global state, session, or another variable
-    const sender = loggedInUsername; // Replace this with how you're managing the logged-in user
-
-    // Get the current timestamp
-    const createdDate = new Date().toISOString(); // ISO format is recommended for timestamps
-    console.log("this is the createddated:", createdDate)
 
     // Send the message through WebSocket
     const chatMessage = {
         Type: 'CHAT_MESSAGE',
         Payload: {
-            Sender: sender, // Set the actual sender username
             Recipient: activeChatRecipient,
             Content: message,
-            CreatedDate: createdDate // Include the timestamp in the message payload
         }
     };
 
@@ -201,27 +196,19 @@ function throttle(func, limit) {
 
 // Function to append new chat messages
 export function appendChatMessage(message) {
-    console.log(message)
-    console.log("this is recipient:", message.Recipient)
-    console.log("this is active chat user:", activeChatRecipient)
-
-    // fix this condition: if sender messages recipient that isnt active in that specific chat,
-    // dont append the message to the recipient!
-
-    if (message.Sender === loggedInUsername && message.Recipient === activeChatRecipient) {
-        console.log("tkhasi");
+    const chatMessagesDiv = document.getElementById('chat-messages'); // Ensure chat-messages div is defined
+    if (!chatMessagesDiv) {
+        console.error("Chat messages div is missing.");
+        return;
     }
+
+        const messageElement = document.createElement('div');
+        messageElement.className = 'chat-message';
     
-     
-    const chatMessagesDiv = document.getElementById('chat-messages');
-
-    const messageElement = document.createElement('div');
-    messageElement.className = 'chat-message';
-
-    // Format the timestamp before displaying it
-    const timestamp = new Date(message.CreatedDate).toLocaleString(); 
-    messageElement.innerHTML = `<strong>${message.Sender} ${timestamp}</strong>: ${message.Content}`;
-    chatMessagesDiv.appendChild(messageElement);
+        // Format the timestamp before displaying it
+        const timestamp = new Date(message.CreatedDate).toLocaleString(); 
+        messageElement.innerHTML = `<strong>${message.Sender} ${timestamp}</strong>: ${message.Content}`;
+        chatMessagesDiv.appendChild(messageElement);
 }
 
 // Function to prepend chat history messages
