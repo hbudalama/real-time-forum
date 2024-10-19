@@ -341,6 +341,7 @@ func chatMessageHandler(client *Client, chatMsg ChatMessage) {
 	if err := client.Conn.WriteJSON(Message{Type: messageTypeChatMessage, Payload: chatMsg}); err != nil {
 		log.Printf("Error sending chat confirmation to sender: %v", err)
 	}
+	userListHandler()
 
 	recipientIndex := slices.IndexFunc(clients, func(e Client) bool {
 		return e.Username == chatMsg.Recipient
@@ -354,7 +355,9 @@ func chatMessageHandler(client *Client, chatMsg ChatMessage) {
 	if isBothChatting {
 		if err := recipient.Conn.WriteJSON(Message{Type: messageTypeChatMessage, Payload: chatMsg}); err != nil {
 			log.Printf("Error sending chat message to recipient: %v", err)
+			//userListHandler()
 			return
+			
 		}
 	} else {
 		// Send a notification to the recipient
@@ -370,9 +373,9 @@ func chatMessageHandler(client *Client, chatMsg ChatMessage) {
 		}
 	}
 
-	log.Printf("Message sent with CreatedDate: %s", chatMsg.CreatedDate)
+	// userListHandler()
 
-	userListHandler()
+	log.Printf("Message sent with CreatedDate: %s", chatMsg.CreatedDate)
 }
 
 func chatHistoryHandler(conn *websocket.Conn, chatRequest map[string]interface{}) {

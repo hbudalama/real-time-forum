@@ -33,19 +33,19 @@ export function initializePosts() {
                             <p>Choose a category:</p>
                             <ul>
                                 <li>
-                                    <input type="checkbox" id="post-education" name="post-category" value="education">
+                                    <input type="radio" id="post-education" name="post-category" value="education">
                                     <label for="post-education">Education</label>
                                 </li>
                                 <li>
-                                    <input type="checkbox" id="post-entertainment" name="post-category" value="entertainment">
+                                    <input type="radio" id="post-entertainment" name="post-category" value="entertainment">
                                     <label for="post-entertainment">Entertainment</label>
                                 </li>
                                 <li>
-                                    <input type="checkbox" id="post-sports" name="post-category" value="sports">
+                                    <input type="radio" id="post-sports" name="post-category" value="sports">
                                     <label for="post-sports">Sports</label>
                                 </li>
                                 <li>
-                                    <input type="checkbox" id="post-news" name="post-category" value="news">
+                                    <input type="radio" id="post-news" name="post-category" value="news">
                                     <label for="post-news">News</label>
                                 </li>
                             </ul>
@@ -161,10 +161,14 @@ function loadPosts() {
 }
 
 function validateForm() {
-    var checkboxes = document.querySelectorAll('input[name="post-category"]:checked');
-    if (checkboxes.length === 0) {
-        alert("Please select at least one category.");
+    const title = document.querySelector('textarea[name="title"]').value.trim();
+    const content = document.querySelector('textarea[name="content"]').value.trim();
+    const category = document.querySelector('input[name="post-category"]:checked');
+
+    if (!title || !content || !category) {
+        alert("The post must have a title, content, and category.");
         return false;
     }
+
     return true;
 }

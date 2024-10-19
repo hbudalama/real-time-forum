@@ -481,7 +481,8 @@ func AddPostsHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Received categories: %v\n", categories) // Debug print
 
 	if strings.TrimSpace(title) == "" || strings.TrimSpace(content) == "" || len(categories) == 0 {
-		RenderAddPostForm(w, r, "The post must have a title, content, and at least one category")
+		// RenderAddPostForm(w, r, "The post must have a title, content, and at least one category")
+		http.Error(w, `{"reason": "The post must have a title, content, and category"}`, http.StatusBadRequest)
 		return
 	}
 
