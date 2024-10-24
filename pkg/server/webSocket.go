@@ -179,6 +179,7 @@ func Echo(w http.ResponseWriter, r *http.Request) {
 			}
 		case messageTypeChatHistory:
 			if payload, ok := message.Payload.(map[string]interface{}); ok {
+				fmt.Println("Payloaaaddd", payload)
 				chatHistoryHandler(connection, payload)
 			} else {
 				connection.WriteJSON(Message{Type: messageTypeError, Payload: "Invalid payload for chat history request"})
@@ -412,6 +413,7 @@ func chatHistoryHandler(conn *websocket.Conn, chatRequest map[string]interface{}
 		conn.WriteJSON(Message{Type: messageTypeChatHistory, Payload: []structs.ChatMessage{}})
 		return
 	}
+	fmt.Println("historyyyyyyyy", messages)
 	// Send the chat history back to the client
 	conn.WriteJSON(Message{Type: messageTypeChatHistory, Payload: messages})
 }
