@@ -20,8 +20,6 @@ window.initializeChat = function initializeChat(event) {
     
     console.log('Open chat for', username);
 
-
-
     // Open chat UI and display the selected user's information
     openChatWindow(username);
 
@@ -51,13 +49,6 @@ window.addEventListener('beforeunload', function () {
         chatClosed();
     }
 });
-
-// window.addEventListener('visibilitychange', function () {
-//     if (document.visibilityState === 'hidden' && activeChatRecipient) {
-//         console.log("CHAT CLOSING due to tab switch or visibility change");
-//         chatClosed();
-//     }
-// });
 
 export function chatClosed() {
     activeChatRecipient = null;
@@ -171,7 +162,7 @@ function loadMoreMessages() {
     if (chatMessagesDiv.scrollTop <= 10) {
         console.log("Near top, loading more messages...")
         // Increment the offset to load the next batch of messages
-        offset += 30;
+        offset += 10;
         const recipient = document.getElementById('user-name-chat').textContent;
         requestChatHistory(recipient, offset);  // Load more messages using offset
     }

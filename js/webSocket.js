@@ -3,8 +3,6 @@ import { loggedInUsername } from './script.js';
 let typingTimeout;
 const typingDelay = 2000; // 2 seconds delay to indicate "stopped typing"
 
-
-
 export function initializeWebSocket() {
     const socket = new WebSocket("ws://localhost:8080/api/ws");
     window.socket = socket;
@@ -48,6 +46,7 @@ function handleMessage(data) {
                 break;
             case "CHAT_HISTORY":
                 handleChatHistory(message.Payload);
+                console.log("Payload: ", message.Payload);
                 break;
             case "NEW_MESSAGE_NOTIFICATION":
                 handleNewMessageNotification(message.Payload);
