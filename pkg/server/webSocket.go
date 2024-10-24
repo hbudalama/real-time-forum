@@ -247,8 +247,6 @@ func userListHandler() {
 		// Create a map of username to LastMessage struct
 		if lastMessages == nil {
 			log.Printf("there is no last message")
-			return
-
 		}
 
 		userLastMessage := make(map[string]*structs.LastMessage)

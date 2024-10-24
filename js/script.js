@@ -109,6 +109,8 @@ function loadForum() {
     // Show the navigation bar and left sidebar by removing the 'hidden' class
     document.querySelector('nav').classList.remove('hidden');
     document.querySelector('.left-sidebar').classList.remove('hidden');
+    // document.getElementById('login-form-container').classList.add('hidden');
+    // document.getElementById('form').classList.add('hidden');
 
     fetch('/api/get_user_info')
     .then(response => response.json())
@@ -132,47 +134,53 @@ function loadForum() {
     })
     .then(posts => {
         console.log(posts); // Inspect the data structure here
-        if (posts === null) {
-            console.log('no posts made.')
-                return
-        }
-        const forumHtml = posts.map(post => `
-            <div class="post">
-                <div class="post-row">
-                    <div class="user-profile">
-                        <img src="/static/images/user.png">
-                        <div>
-                            <p>${post.Username}</p>
+        
+        // Check if there are any posts
+        const mainContent = document.getElementById('main-content');
+        if (posts && posts.length > 0) {
+            const forumHtml = posts.map(post => `
+                <div class="post">
+                    <div class="post-row">
+                        <div class="user-profile">
+                            <img src="/static/images/user.png">
+                            <div>
+                                <p>${post.Username}</p>
+                            </div>
                         </div>
+                    </div>
+                    <a href="javascript:void(0)" class="post-title-link" data-id="${post.ID}">
+                        <div>
+                            <h2>${post.Title}</h2>
+                            <h4>Category: ${post.Category}</h4>
+                        </div>
+                    </a>
+                    <div class="post-row">
+                        <div class="activity-icons">
+                            <div class="like-button" data-id="${post.ID}">
+                                <i class="fa fa-thumbs-up icon"></i>${post.Likes}
+                            </div>
+                            <div class="dislike-button" data-id="${post.ID}">
+                                <i class="fa fa-thumbs-down icon"></i>${post.Dislikes}
+                            </div>
+                            <div>
+                                <a href="javascript:void(0)" class="comment-icon" data-id="${post.ID}">
+                                    <i class="fa fa-comment icon"></i>
+                                    <span id="post-${post.ID}-comments-count">${post.Comments}</span>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="post-profile-icon"></div>
                     </div>
                 </div>
-                <a href="javascript:void(0)" class="post-title-link" data-id="${post.ID}">
-                    <div>
-                        <h2>${post.Title}</h2>
-                        <h4>Category: ${post.Category}</h4>
-                    </div>
-                </a>
-                <div class="post-row">
-                    <div class="activity-icons">
-                        <div class="like-button" data-id="${post.ID}">
-                            <i class="fa fa-thumbs-up icon"></i>${post.Likes}
-                        </div>
-                        <div class="dislike-button" data-id="${post.ID}">
-                            <i class="fa fa-thumbs-down icon"></i>${post.Dislikes}
-                        </div>
-                        <div>
-                            <a href="javascript:void(0)" class="comment-icon" data-id="${post.ID}">
-                                <i class="fa fa-comment icon"></i>
-                                <span id="post-${post.ID}-comments-count">${post.Comments}</span>
-                            </a>
-                        </div>
-                    </div>
-                    <div class="post-profile-icon"></div>
-                </div>
-            </div>
-        `).join('');
+            `).join('');
 
-        document.getElementById('main-content').innerHTML = `<div class="index">${forumHtml}</div>`;
+            mainContent.innerHTML = `<div class="index">${forumHtml}</div>`;
+            // Hide registration form if there are posts
+            document.getElementById('form').classList.add('hidden');
+        } else {
+            // Show the registration form if there are no posts
+            mainContent.innerHTML = '<p style="color:white; font-size:1.5em;">No posts made yet. Be the First to create a post!</p>';
+        }
 
         initializePosts();
         initializeComments();
@@ -182,8 +190,8 @@ function loadForum() {
     .catch(error => {
         console.error('There has been a problem with your fetch operation:', error);
     });
-
 }
+
 
 function loadAges() {
     fetch('/api/get_ages')
@@ -233,40 +241,6 @@ window.handleLogin =  function handleLogin(event) {
         alert(`Error: ${error.message}`);
     });
 }
-
-function logoutHandler() {
-    fetch('/api/logout', {
-        method: 'DELETE',
-        credentials: 'include',
-
-        headers: {
-            'Content-Type': 'application/json',
-        },
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`Server error: ${response.status} ${response.statusText}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            loadLoginForm();
-        } else {
-            console.error('Logout failed:', data.message);
-        }
-    })
-    .catch(error => console.error('There has been a problem with your fetch operation:', error));
-}
-
-// function validateForm() {
-//     var checkboxes = document.querySelectorAll('input[name="post-category"]:checked');
-//     if (checkboxes.length === 0) {
-//         alert("Please select at least one category.");
-//         return false;
-//     }
-//     return true;
-// }
 
 
 window.handleSignup = function handleSignup(event) {
