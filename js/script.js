@@ -176,10 +176,9 @@ function loadForum() {
 
             mainContent.innerHTML = `<div class="index">${forumHtml}</div>`;
             // Hide registration form if there are posts
-            document.getElementById('form').classList.add('hidden');
+            // document.getElementById('form').classList.add('hidden');
         } else {
-            // Show the registration form if there are no posts
-            mainContent.innerHTML = '<p style="color:white; font-size:1.5em;">No posts made yet. Be the First to create a post!</p>';
+            mainContent.innerHTML = '<p style="color:white; font-size:1.5em; text-align:center;">No posts made yet. Be the First to create a post!</p>';
         }
 
         initializePosts();

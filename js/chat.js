@@ -114,8 +114,10 @@ function openChatWindow(username) {
             <div id="chat-messages">
                 <!-- Messages will be displayed here -->
             </div>
+            <div id="chat-input-container">
             <textarea id="chat-input" placeholder="Type your message here..."></textarea>
             <button id="send-message-button">Send</button>
+            </div>
         </div>`
     ;
 
@@ -169,7 +171,7 @@ function loadMoreMessages() {
     if (chatMessagesDiv.scrollTop <= 10) {
         console.log("Near top, loading more messages...")
         // Increment the offset to load the next batch of messages
-        offset += 10;
+        offset += 30;
         const recipient = document.getElementById('user-name-chat').textContent;
         requestChatHistory(recipient, offset);  // Load more messages using offset
     }

@@ -8,6 +8,10 @@
 .index {
     width: 100%;
     background: black;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 nav {
@@ -62,21 +66,13 @@ nav {
 
 #main-container {
     display: flex;
-    justify-content: space-between;
     padding: 20px;
-    overflow: scroll;
+    /* height: 100%; */
+    flex-grow: 1;
+    gap: 20px;
+    overflow: hidden;
 }
 
-/* .left-sidebar {
-    background: rgba(255, 255, 255, 0.034);
-    flex-basis: 25%;
-    position: sticky;
-    top: 70px;
-    align-self: flex-start;
-    height: 50vh;
-    border-radius: 10px;
-    margin-left: 10px;
-} */
 
 .user-list-profile {
     /* width: 45px; */
@@ -126,8 +122,10 @@ nav {
 }
 
 #main-content {
-    flex-basis: 50%;
-    margin-right: 150px;
+    flex-grow: 1;
+    overflow: hidden;
+
+    /* margin-right: 150px; */
 }
 
 .post-container {
@@ -176,8 +174,7 @@ nav {
 
 
 textarea {
-    margin-top: 2%;
-    margin-bottom: 5%;
+    margin-bottom: 3%;
     width: 100%;
     border: 0;
     outline: 0;
@@ -353,8 +350,7 @@ button:hover {
 }
 
 .left-sidebar {
-    width: 200px; /* Adjust as needed */
-    height: 600px;
+    min-width: 20%; 
     padding: 10px;
     background-color: #333; /* Adjust as needed */
     color: #fff; /* Adjust as needed */
@@ -391,7 +387,11 @@ button:hover {
     color: whitesmoke;
     border-radius: 10px;
     height: 100%;
-    padding: 20px;
+    max-height: 100%;
+    padding: 20px;    
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
 
 #user-info-chat {
@@ -490,7 +490,11 @@ button:hover {
 
 #chat-messages {
     overflow-y: scroll;
-    height: 180px; /* Adjust as needed */
+    width: 100%;
+}
+
+.chat-message {
+    word-wrap: break-word;
 }
 
 #typing-status {
