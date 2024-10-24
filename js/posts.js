@@ -170,5 +170,15 @@ function validateForm() {
         return false;
     }
 
+    if (title.length > 100) {
+        alert('Title is too long.');
+        return;
+    }
+
+    if (content.length > 500) {
+        alert('Content limit is 500 characters.');
+        return;
+    }
+
     return true;
 }

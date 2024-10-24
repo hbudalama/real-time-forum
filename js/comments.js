@@ -232,6 +232,12 @@ function addComment() {
         alert('Comment cannot be empty');
         return;
     }
+
+    if (comment.length > 100) {
+        alert('Comment is too long.');
+        return;
+    }
+
     const postId = dialog.dataset.postId; // Assuming postId is set as a data attribute on the dialog
 
     fetch(`/api/posts/${postId}/comments`, {

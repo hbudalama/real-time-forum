@@ -386,7 +386,7 @@ button:hover {
     background-color: rgba(255, 255, 255, 0.074);
     color: whitesmoke;
     border-radius: 10px;
-    height: 100%;
+    height: 70%;
     max-height: 100%;
     padding: 20px;    
     display: flex;
@@ -434,6 +434,7 @@ button:hover {
 }
 .dialog.show {
     display: block;
+    overflow: scroll;
 }
 .dialog-overlay {
     display: none;
