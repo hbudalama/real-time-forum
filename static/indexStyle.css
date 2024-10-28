@@ -492,7 +492,7 @@ button:hover {
 #chat-messages {
     overflow-y: scroll;
     width: 100%;
-    height: 32%;
+    height: 45%;
 }
 
 .chat-message {
